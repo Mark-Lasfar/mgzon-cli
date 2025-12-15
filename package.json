@@ -1,0 +1,76 @@
+{
+  "name": "@mgzon/cli",
+  "version": "1.0.0",
+  "description": "MGZON Command Line Interface - Official CLI tool for MGZON ecommerce platform",
+  "main": "dist/index.js",
+  "bin": {
+    "mz": "./dist/index.js",
+    "mgzon": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build && npm test",
+    "test": "echo \"No tests yet\"",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "postbuild": "chmod +x dist/index.js"
+  },
+  "keywords": [
+    "mgzon",
+    "ecommerce",
+    "cli",
+    "developer-tools",
+    "api",
+    "sdk",
+    "platform"
+  ],
+  "author": "MGZON Team <dev@mgzon.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mark-Lasfar/mgzon-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mark-Lasfar/mgzon-cli/issues"
+  },
+  "homepage": "https://mgzon.com/docs/cli",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.5.0",
+    "boxen": "^7.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^11.0.0",
+    "figlet": "^1.6.0",
+    "inquirer": "^9.2.10",
+    "ora": "^7.0.1",
+    "archiver": "^6.0.0",
+    "fs-extra": "^11.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/inquirer": "^9.0.3",
+    "@types/figlet": "^1.5.6",
+    "@types/fs-extra": "^11.0.1",
+    "typescript": "^5.1.6",
+    "ts-node": "^10.9.1"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

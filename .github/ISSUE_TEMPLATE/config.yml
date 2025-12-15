@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📧 MGZON Support
+    url: https://mgzon.com/support
+    about: Contact MGZON support team for account-related issues
+  - name: 📘 Documentation
+    url: https://mgzon.com/docs/cli
+    about: Check the official documentation first
+  - name: 💬 Discord Community
+    url: https://discord.gg/mgzon
+    about: Ask questions in our community Discord
