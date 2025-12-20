@@ -1,6 +1,6 @@
 {
   "name": "@mgzon/cli",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "MGZON Command Line Interface - Official CLI tool for MGZON ecommerce platform",
   "main": "dist/index.js",
   "bin": {
