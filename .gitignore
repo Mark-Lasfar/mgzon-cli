@@ -5,6 +5,7 @@ bin/
 .DS_Store
 .env
 .vscode/
+releases/
 
 .env.local
 .env.*.local
