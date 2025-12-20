@@ -50,7 +50,7 @@ Download the pre-built executables for your platform:
 #### Linux
 ```bash
 # Download and make executable
-curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-linux -o mgzon
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/mgzon-linux -o mgzon
 chmod +x mgzon
 sudo mv mgzon /usr/local/bin/
 ```
@@ -58,7 +58,7 @@ sudo mv mgzon /usr/local/bin/
 #### macOS
 ```bash
 # Download and make executable
-curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-macos -o mgzon
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/mgzon-macos -o mgzon
 chmod +x mgzon
 sudo mv mgzon /usr/local/bin/
 ```
@@ -66,7 +66,7 @@ sudo mv mgzon /usr/local/bin/
 #### Windows
 ```bash
 # Download from releases page and add to PATH
-# https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-win.exe
+# https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/mgzon-win.exe
 ```
 
 Verify installation:
@@ -81,9 +81,9 @@ mgzon --version
 
 For users who prefer a graphical interface, download the MGZON GUI app:
 
-- **Linux**: [Download AppImage](https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.AppImage)
-- **macOS**: [Download DMG](https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.dmg)  
-- **Windows**: [Download EXE](https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.exe)
+- **Linux**: [Download AppImage](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON%20GUI-1.0.0.AppImage)
+- **macOS**: [Download DMG](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON%20GUI-1.0.0.dmg)  
+- **Windows**: [Download EXE](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON%20GUI.exe)
 
 The GUI provides the same functionality as the CLI but with a user-friendly interface.
 
