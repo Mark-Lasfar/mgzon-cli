@@ -1,6 +1,3 @@
 [submodule "releases"]
 	path = releases
 	url = https://github.com/Mark-Lasfar/mgzon-releases.git
-[submodule "r./releases_backup"]
-	path = r./releases_backup
-	url = https://github.com/Mark-Lasfar/mgzon-releases
