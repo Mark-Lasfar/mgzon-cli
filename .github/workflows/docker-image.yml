@@ -1,27 +1,49 @@
-name: Build Docker Image
+name: Build and Test Docker Image
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # مفيد لو هتعمل tags أو provenance في المستقبل
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3   # v3 مستقر جدًا، v4 لسه جديد شوية، خلينا نستخدم المستقر
 
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: false
-        tags: mgzon-cli:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build Docker image
+        uses: docker/build-push-action@v5     # v5 أحدث مستقر (v6 لسه تجريبي في بعض الحالات)
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: mgzon-cli:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64   # اختياري، بس كويس
+
+      - name: Test CLI in container
+        run: |
+          echo "🧪 Testing mgzon-cli Docker image..."
+          
+          # اختبار الـ banner والـ help
+          docker run --rm mgzon-cli:latest --help | grep "MGZON CLI" || exit 1
+          
+          # اختبار الـ version (دلوقتي 2.0.0)
+          docker run --rm mgzon-cli:latest --version | grep "2.0.0" || exit 1
+          
+          # اختبار أمر بسيط زي whoami (مش هيحتاج auth)
+          docker run --rm mgzon-cli:latest whoami
+          
+          # اختبار أمر support
+          docker run --rm mgzon-cli:latest support | grep "MGZON Support"
+          
+          echo "✅ Docker image built and CLI tests passed successfully!"

@@ -521,18 +521,17 @@ export async function checkForUpdates() {
       timeout: 3000
     });
     
-    const packageJson = await fs.readJson(join(__dirname, '../../package.json'));
-    const currentVersion = packageJson.version;
+    const currentVersion = require('../../package.json').version;
     const latestVersion = response.data.version;
     
-    if (currentVersion !== latestVersion) {
-      console.log(chalk.yellow('\n' + '─'.repeat(50)));
-      console.log(chalk.yellow('⚠️  Update available!'));
-      console.log(chalk.cyan(`   Current: ${currentVersion}`));
-      console.log(chalk.cyan(`   Latest: ${latestVersion}`));
-      console.log(chalk.cyan('   Run: npm install -g @mgzon/cli'));
-      console.log(chalk.yellow('─'.repeat(50) + '\n'));
-    }
+if (currentVersion !== latestVersion) {
+  console.log(chalk.yellow('\n' + '─'.repeat(50)));
+  console.log(chalk.yellow('⚠️  Update available!'));
+  console.log(chalk.cyan(`   Current: ${currentVersion}`));
+  console.log(chalk.cyan(`   Latest: ${latestVersion}`));
+  console.log(chalk.cyan('   Run: npm install -g @mgzon/cli@latest'));
+  console.log(chalk.yellow('─'.repeat(50) + '\n'));
+}
   } catch {
     // Silent fail
   }

@@ -20,11 +20,11 @@ const program = new Command();
 program
   .name('mz')
   .description('MGZON Command Line Interface - Official CLI tool for MGZON Platform')
-  .version('1.0.0', '-v, --version')
-  .addHelpText('afterAll', `
+  .version('2.0.0', '-v, --version')
+.addHelpText('afterAll', `
 ${chalk.gray('─'.repeat(50))}
 ${chalk.bold('📊 MGZON CLI Information')}
-${chalk.gray('├')} Version: 1.0.0
+${chalk.gray('├')} Version: ${program.version()}
 ${chalk.gray('├')} Node.js: ${process.version}
 ${chalk.gray('├')} Platform: ${process.platform} (${process.arch})
 ${chalk.gray('├')} Homepage: https://mgzon.com/cli
@@ -389,6 +389,8 @@ process.on('uncaughtException', (error) => {
   console.error(chalk.red('─'.repeat(50) + '\n'));
   process.exit(1);
 });
+
+
 
 // Parse arguments
 try {
