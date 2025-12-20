@@ -1,3 +1,4 @@
+// /workspaces/mgzon-cli/src/utils/config.ts
 import { homedir } from 'os';
 import { join } from 'path';
 import fs from 'fs-extra';
@@ -10,7 +11,7 @@ const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 export interface CliConfig {
   apiKey?: string;
   apiUrl?: string;
-  defaultEnvironment?: 'development' | 'staging' | 'production'| 'sandbox';
+  defaultEnvironment?: 'development' | 'staging' | 'production' | 'sandbox';
   userId?: string;
   email?: string;
   name?: string;
@@ -23,16 +24,45 @@ export interface CliConfig {
   currentProject?: string;
   lastLogin?: string;
   sessionToken?: string;
-  refreshToken?: string;
   expiresAt?: string;
+  useLocalhost?: boolean;
+  useNgrok?: boolean;
+  ngrokUrl?: string;
 }
 
-// API URLs based on environment
-const API_URLS = {
-  development: 'http://localhost:3000/api/v1',
-  staging: 'https://staging.api.mgzon.com/v1',
-  production: 'https://api.mgzon.com/v1'
-};
+// ⭐⭐ دالة لتحديد أفضل API URL تلقائياً
+async function determineBestApiUrl(): Promise<string> {
+  try {
+    console.log(chalk.gray('   🔍 Auto-detecting best API URL...'));
+    
+    const testUrls = [
+      { name: 'localhost', url: 'http://localhost:3000/api/v1' },
+      { name: 'ngrok', url: 'https://75ed3a070bbc.ngrok-free.app/api/v1' }, // ⭐⭐ مثال
+      { name: 'local IP', url: 'http://192.168.1.4:3000/api/v1' }, // ⭐⭐ من الـ logs
+    ];
+    
+    for (const test of testUrls) {
+      try {
+        console.log(chalk.gray(`   Testing ${test.name}: ${test.url}`));
+        const response = await axios.get(`${test.url}/health`, { timeout: 3000 });
+        
+        if (response.status === 200) {
+          console.log(chalk.green(`   ✅ ${test.name} is reachable`));
+          return test.url;
+        }
+      } catch (error) {
+        console.log(chalk.yellow(`   ❌ ${test.name} not reachable`));
+      }
+    }
+    
+    console.log(chalk.gray('   ⚠️  No reachable URLs found, using default'));
+    return 'http://localhost:3000/api/v1';
+    
+  } catch (error) {
+    console.log(chalk.gray('   ⚠️  Error determining best URL, using localhost'));
+    return 'http://localhost:3000/api/v1';
+  }
+}
 
 export async function getConfig(): Promise<CliConfig> {
   try {
@@ -43,17 +73,26 @@ export async function getConfig(): Promise<CliConfig> {
       return config;
     }
     
+    // ✅ نستخدم auto-detection للإعداد الأولي
+    const bestUrl = await determineBestApiUrl();
+    
     const defaultConfig: CliConfig = {
-      apiUrl: API_URLS.production,
-      defaultEnvironment: 'production',
-      theme: 'default'
+      apiUrl: bestUrl,
+      defaultEnvironment: 'development',
+      theme: 'default',
+      useLocalhost: bestUrl.includes('localhost'),
+      useNgrok: bestUrl.includes('ngrok')
     };
     
     await fs.writeJson(CONFIG_FILE, defaultConfig, { spaces: 2 });
     return defaultConfig;
   } catch (error) {
     console.error('Error reading config:', error);
-    return {};
+    return { 
+      apiUrl: 'http://localhost:3000/api/v1',
+      useLocalhost: false,
+      useNgrok: false 
+    };
   }
 }
 
@@ -62,8 +101,28 @@ export async function saveConfig(config: Partial<CliConfig>) {
     const currentConfig = await getConfig();
     const newConfig = { ...currentConfig, ...config };
     
+    // ⭐⭐ منطق تلقائي: تحديد نوع الاتصال بناءً على الـ URL
+    if (newConfig.apiUrl) {
+      if (newConfig.apiUrl.includes('ngrok')) {
+        newConfig.useNgrok = true;
+        newConfig.useLocalhost = false;
+        newConfig.ngrokUrl = newConfig.apiUrl.replace('/api/v1', '');
+      } else if (newConfig.apiUrl.includes('localhost')) {
+        newConfig.useLocalhost = true;
+        newConfig.useNgrok = false;
+        newConfig.ngrokUrl = undefined;
+      }
+    }
+    
     await fs.ensureDir(CONFIG_DIR);
     await fs.writeJson(CONFIG_FILE, newConfig, { spaces: 2 });
+    
+    // ⭐⭐ عرض رسالة توضيحية
+    if (newConfig.apiUrl && newConfig.apiUrl !== currentConfig.apiUrl) {
+      console.log(chalk.gray('\n   ⚙️  Configuration updated:'));
+      console.log(chalk.cyan(`     API URL: ${newConfig.apiUrl}`));
+      console.log(chalk.cyan(`     Mode: ${newConfig.useNgrok ? 'Ngrok (Remote)' : 'Localhost (Local)'}`));
+    }
     
     return newConfig;
   } catch (error) {
@@ -72,33 +131,185 @@ export async function saveConfig(config: Partial<CliConfig>) {
   }
 }
 
-export async function getApiKey(): Promise<string | undefined> {
-  // 1. Check environment variable first
-  if (process.env.MGZON_API_KEY) {
-    return process.env.MGZON_API_KEY;
-  }
-  
-  // 2. Check config file
-  const config = await getConfig();
-  return config.apiKey;
-}
-
+// ⭐⭐ دالة محسنة لبناء API URLs مع auto-detection
 export async function getApiUrl(): Promise<string> {
   const config = await getConfig();
-  return config.apiUrl || API_URLS.production;
+  
+  // ⭐⭐ إذا كان هناك مفتاح في environment variable، نستخدمه أولاً
+  if (process.env.MGZON_API_URL) {
+    console.log(chalk.gray(`   Using MGZON_API_URL from env: ${process.env.MGZON_API_URL}`));
+    return process.env.MGZON_API_URL;
+  }
+  
+  if (!config.apiUrl) {
+    // ⭐⭐ إذا مفيش config، نجرب نحدد أفضل URL
+    const bestUrl = await determineBestApiUrl();
+    await saveConfig({ apiUrl: bestUrl });
+    return bestUrl;
+  }
+  
+  return config.apiUrl;
 }
 
+// ⭐⭐ دالة جديدة: اكتشاف أفضل اتصال تلقائياً
+export async function autoDetectConnection(): Promise<{
+  type: 'localhost' | 'ngrok' | 'ip' | 'unknown';
+  url: string;
+  reachable: boolean;
+}> {
+  console.log(chalk.gray('   🔍 Auto-detecting connection...'));
+  
+  const testUrls = [
+    { type: 'localhost', url: 'http://localhost:3000/api/v1' },
+    { type: 'ngrok', url: 'https://75ed3a070bbc.ngrok-free.app/api/v1' },
+    { type: 'ip', url: 'http://192.168.1.4:3000/api/v1' },
+  ];
+  
+  for (const test of testUrls) {
+    try {
+      console.log(chalk.gray(`   Testing ${test.type}: ${test.url}`));
+      const response = await axios.get(`${test.url}/health`, { timeout: 5000 });
+      
+      if (response.status === 200) {
+        console.log(chalk.green(`   ✅ ${test.type} is reachable`));
+        return {
+          type: test.type as any,
+          url: test.url,
+          reachable: true
+        };
+      }
+    } catch (error) {
+      console.log(chalk.yellow(`   ❌ ${test.type} not reachable`));
+    }
+  }
+  
+  return {
+    type: 'unknown',
+    url: 'http://localhost:3000/api/v1',
+    reachable: false
+  };
+}
+
+// ⭐⭐ دالة جديدة: setup wizard للمستخدمين الجدد
+export async function setupWizard() {
+  console.log(chalk.cyan('\n' + '═'.repeat(50)));
+  console.log(chalk.bold('🚀 MGZON CLI Setup Wizard'));
+  console.log(chalk.cyan('═'.repeat(50)));
+  
+  const { default: inquirer } = await import('inquirer');
+  
+  const answers = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'connectionType',
+      message: 'How do you want to connect to MGZON?',
+      choices: [
+        { name: 'Local development (localhost:3000)', value: 'localhost' },
+        { name: 'Ngrok tunnel (remote access)', value: 'ngrok' },
+        { name: 'Custom IP/URL', value: 'custom' }
+      ],
+      default: 'localhost'
+    },
+    {
+      type: 'input',
+      name: 'customUrl',
+      message: 'Enter your custom API URL:',
+      when: (answers) => answers.connectionType === 'custom',
+      validate: (input: string) => {
+        if (!input) return 'URL is required';
+        try {
+          new URL(input);
+          return true;
+        } catch {
+          return 'Please enter a valid URL';
+        }
+      }
+    }
+  ]);
+  
+  let apiUrl: string;
+  
+  switch (answers.connectionType) {
+    case 'localhost':
+      apiUrl = 'http://localhost:3000/api/v1';
+      break;
+    case 'ngrok':
+      console.log(chalk.yellow('\n⚠️  Note: You need to run ngrok separately:'));
+      console.log(chalk.cyan('  1. Install ngrok: https://ngrok.com/download'));
+      console.log(chalk.cyan('  2. Run: ngrok http 3000'));
+      console.log(chalk.cyan('  3. Copy the forwarding URL (e.g., https://abc123.ngrok.io)'));
+      
+      const { ngrokUrl } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'ngrokUrl',
+          message: 'Enter your ngrok URL (without /api/v1):',
+          validate: (input: string) => {
+            if (!input) return 'URL is required';
+            try {
+              new URL(input);
+              return true;
+            } catch {
+              return 'Please enter a valid URL';
+            }
+          }
+        }
+      ]);
+      
+      apiUrl = `${ngrokUrl}/api/v1`;
+      break;
+    case 'custom':
+      apiUrl = answers.customUrl;
+      break;
+    default:
+      apiUrl = 'http://localhost:3000/api/v1';
+  }
+  
+  await saveConfig({ apiUrl });
+  
+  console.log(chalk.green('\n✅ Setup complete!'));
+  console.log(chalk.cyan(`   API URL set to: ${apiUrl}`));
+  console.log(chalk.cyan('\n   Next: mz login\n'));
+}
+
+// ⭐⭐ تحديث دالة login لتدعم auto-detection
 export async function loginCommand(apiKey: string) {
   try {
     const apiUrl = await getApiUrl();
     
-    // Use the CLI-specific login endpoint
-    const response = await axios.post(`${apiUrl}/cli/auth/login`, {
-      apiKey
-    }, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 10000
-    });
+    console.log(chalk.gray(`   Debug: Login URL: ${apiUrl}/cli/auth/login`));
+    
+    // ✅ محاولة auto-detection إذا فشل الاتصال
+    let response;
+    try {
+      response = await axios.post(`${apiUrl}/cli/auth/login`, {
+        apiKey
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+    } catch (firstError: any) {
+      // ⭐⭐ إذا فشل الاتصال، نجرب auto-detection
+      console.log(chalk.yellow('   ⚠️  Connection failed, trying auto-detection...'));
+      
+      const bestConnection = await autoDetectConnection();
+      
+      if (!bestConnection.reachable) {
+        throw firstError; // نرمي الخطأ الأصلي
+      }
+      
+      // ⭐⭐ نجرب مع URL الجديد
+      console.log(chalk.gray(`   Debug: Retrying with ${bestConnection.type}: ${bestConnection.url}`));
+      response = await axios.post(`${bestConnection.url}/cli/auth/login`, {
+        apiKey
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+      
+      // ⭐⭐ نحفظ الـ URL الجديد في الـ config
+      await saveConfig({ apiUrl: bestConnection.url });
+    }
 
     if (!response.data.success) {
       throw new Error(response.data.error || 'Login failed');
@@ -106,9 +317,9 @@ export async function loginCommand(apiKey: string) {
 
     const { user, apiKey: keyInfo, session } = response.data.data;
     
-    // Save to config
+    // Save
     await saveConfig({
-      apiKey,
+      apiKey: apiKey,
       userId: user.id,
       email: user.email,
       name: user.name,
@@ -124,11 +335,9 @@ export async function loginCommand(apiKey: string) {
     return user;
   } catch (error: any) {
     if (error.code === 'ECONNREFUSED') {
-      throw new Error('Cannot connect to MGZON API. Check your network connection.');
+      throw new Error(`Cannot connect to MGZON API at ${await getApiUrl()}. Is the server running?`);
     } else if (error.response?.status === 401) {
-      throw new Error('Invalid API key. Please check your key and try again.');
-    } else if (error.response?.status === 403) {
-      throw new Error('API key has insufficient permissions.');
+      throw new Error('Invalid API key.');
     } else if (error.response?.data?.error) {
       throw new Error(error.response.data.error);
     } else {
@@ -137,12 +346,31 @@ export async function loginCommand(apiKey: string) {
   }
 }
 
-// Verify API Key using /auth/verify endpoint
+// ⭐⭐ دالة جديدة: الحصول على API key من environment أو config
+export async function getApiKey(): Promise<string | undefined> {
+  // 1. Environment variable أولاً (الأفضل)
+  if (process.env.MGZON_API_KEY) {
+    console.log(chalk.gray('   Using MGZON_API_KEY from environment variable'));
+    return process.env.MGZON_API_KEY;
+  }
+  
+  // 2. Config file
+  const config = await getConfig();
+  return config.apiKey;
+}
+
+// ⭐⭐ دالة جديدة: الحصول على base URL بدون /api/v1
+export async function getBaseUrl(): Promise<string> {
+  const apiUrl = await getApiUrl();
+  return apiUrl.replace('/api/v1', '');
+}
+
+// ⭐⭐ دالة جديدة: التحقق من API key مع دعم auto-detection
 export async function verifyApiKey(apiKey: string) {
   try {
-    const apiUrl = await getApiUrl();
+    const baseUrl = await getBaseUrl();
     
-    const response = await axios.post(`${apiUrl}/auth/verify`, {}, {
+    const response = await axios.post(`${baseUrl}/api/v1/auth/verify`, {}, {
       headers: { 
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
@@ -154,8 +382,30 @@ export async function verifyApiKey(apiKey: string) {
   } catch (error: any) {
     if (error.response?.status === 401) {
       throw new Error('Invalid API key');
+    } else if (error.code === 'ECONNREFUSED') {
+      throw new Error('Cannot connect to API server. Check if server is running.');
     }
     throw error;
+  }
+}
+
+// ⭐⭐ دالة مساعدة: اختبار اتصال الـ API
+export async function testApiConnection(): Promise<{ success: boolean; url: string; error?: string }> {
+  try {
+    const apiUrl = await getApiUrl();
+    const healthUrl = apiUrl.replace('/api/v1', '/api/v1/health');
+    
+    const response = await axios.get(healthUrl, { timeout: 5000 });
+    return {
+      success: response.data.success || true,
+      url: healthUrl
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      url: await getApiUrl(),
+      error: error.message
+    };
   }
 }
 
@@ -165,8 +415,8 @@ export async function logout() {
   
   if (config.apiKey) {
     try {
-      const apiUrl = await getApiUrl();
-      await axios.post(`${apiUrl}/auth/logout`, {}, {
+      const baseUrl = await getBaseUrl();
+      await axios.post(`${baseUrl}/api/v1/auth/logout`, {}, {
         headers: { 'Authorization': `Bearer ${config.apiKey}` }
       });
     } catch (error) {
@@ -186,7 +436,6 @@ export async function logout() {
     isSeller: undefined,
     isAdmin: undefined,
     sessionToken: undefined,
-    refreshToken: undefined,
     expiresAt: undefined
   });
 }
@@ -207,14 +456,24 @@ export async function getUserInfo() {
     role: config.role,
     isDeveloper: config.isDeveloper,
     isSeller: config.isSeller,
-    isAdmin: config.isAdmin
+    isAdmin: config.isAdmin,
+    apiUrl: config.apiUrl
   };
 }
 
-// Get current project
-export async function getCurrentProject(): Promise<string | null> {
+// ⭐⭐ Get current project with validation
+export async function getCurrentProject(): Promise<{ path: string; valid: boolean } | null> {
   const config = await getConfig();
-  return config.currentProject || null;
+  
+  if (!config.currentProject) {
+    return null;
+  }
+  
+  const valid = await fs.pathExists(config.currentProject);
+  return {
+    path: config.currentProject,
+    valid
+  };
 }
 
 // Set current project
@@ -244,7 +503,7 @@ export async function saveProjectConfig(projectPath: string, config: any) {
   await fs.writeJson(projectConfigFile, config, { spaces: 2 });
 }
 
-// Check for updates
+// ⭐⭐ Check for updates with better error handling
 export async function checkForUpdates() {
   try {
     const response = await axios.get('https://registry.npmjs.org/@mgzon/cli/latest', {
@@ -255,12 +514,48 @@ export async function checkForUpdates() {
     const latestVersion = response.data.version;
     
     if (currentVersion !== latestVersion) {
-      console.log(chalk.yellow('\n⚠️  Update available!'));
+      console.log(chalk.yellow('\n' + '─'.repeat(50)));
+      console.log(chalk.yellow('⚠️  Update available!'));
       console.log(chalk.cyan(`   Current: ${currentVersion}`));
       console.log(chalk.cyan(`   Latest: ${latestVersion}`));
-      console.log(chalk.cyan('   Run: npm install -g @mgzon/cli\n'));
+      console.log(chalk.cyan('   Run: npm install -g @mgzon/cli'));
+      console.log(chalk.yellow('─'.repeat(50) + '\n'));
     }
   } catch (error) {
     // Silent fail
   }
+}
+
+// ⭐⭐ دالة جديدة: validate API endpoints
+export async function validateApiEndpoints(): Promise<{
+  health: string;
+  webhooks: string;
+  apps: string;
+  auth: string;
+}> {
+  const apiUrl = await getApiUrl();
+  
+  return {
+    health: `${apiUrl}/health`,
+    webhooks: `${apiUrl}/webhooks`,
+    apps: `${apiUrl}/apps`,
+    auth: `${apiUrl}/auth/verify`
+  };
+}
+
+// ⭐⭐ دالة جديدة: test all endpoints
+export async function testAllEndpoints(): Promise<Record<string, boolean>> {
+  const endpoints = await validateApiEndpoints();
+  const results: Record<string, boolean> = {};
+  
+  for (const [name, url] of Object.entries(endpoints)) {
+    try {
+      const response = await axios.get(url, { timeout: 3000 });
+      results[name] = response.status === 200;
+    } catch (error) {
+      results[name] = false;
+    }
+  }
+  
+  return results;
 }

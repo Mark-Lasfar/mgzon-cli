@@ -1,0 +1,319 @@
+# 1. أولاً نتأكد من الـ config
+mz config --set apiUrl=http://localhost:3000/api/v1
+
+# 2. نجرب الـ debug
+mz debug
+
+# المفروض يطلعلك:
+#   API URL: http://localhost:3000/api/v1
+#   MGZON API: ✅ Reachable (http://localhost:3000/api/v1/health)
+#   Auth Verify: ✅ Reachable (200)
+
+# 3. لو لسة مش شغال
+mz debug --network
+# دي هتطلعلك بالظبط فين المشكلة
+
+
+mz login
+
+# المفروض تشوف:
+#   Debug: API URL: http://localhost:3000/api/v1
+#   Debug: Login URL: http://localhost:3000/api/v1/cli/auth/login
+#   🔑 Enter your MGZON API Key: 
+
+
+
+# في terminal تاني
+cd /workspaces/mgzon-cli
+npm run build
+
+mz config --set apiUrl=http://localhost:3000/api/v1
+
+mz login
+
+
+mz config --set apiUrl=http://localhost:3000/api/v1
+mz config --get apiUrl
+# المفروض يطلع: http://localhost:3000/api/v1
+
+
+mz login
+
+# المفروض تشوف:
+#   Debug: API URL: http://localhost:3000/api/v1
+#   Debug: Login URL: http://localhost:3000/api/v1/cli/auth/login
+#   🔑 Enter your MGZON API Key: 
+
+
+mz init test-app
+#   Debug: API URL: http://localhost:3000/api/v1
+#   Debug: Looking for template: /workspaces/mgzon-cli/templates/nextjs
+#   Debug: Template not found, creating basic structure...
+#   Created: package.json
+#   Created: mgzon.config.json
+#   Created: next.config.js
+#   ... etc
+
+
+# Create basic app
+mz init my-app
+
+# Create with TypeScript
+mz init my-app --typescript
+
+# Create with auth and database
+mz init my-app --with-auth --with-database
+
+# Create with specific template
+mz init my-app --template=nextjs
+
+
+cd /workspaces/mgzon-cli
+npm run build
+
+# اختبار في دايركتوري فارغة
+mkdir test-deploy && cd test-deploy
+echo '{"name": "test-app", "version": "1.0.0"}' > package.json
+mz deploy --env=staging
+
+# أو في مشروع موجود
+cd /path/to/your/nextjs/project
+mz deploy --app-id=<your-app-id>
+
+
+DEBUG=1 mz deploy
+# أو
+MGZON_API_KEY="your-key" mz deploy --env=staging
+
+
+# 1. تسجيل الدخول أولاً
+mz login
+
+# 2. نشر تطبيق جديد
+mz deploy --env=staging
+
+# 3. نشر تطبيق محدد
+mz deploy --app-id=your-app-id --env=production
+
+# 4. تخطي الـ build
+mz deploy --no-build --env=staging
+
+# 5. مع auto approve
+mz deploy --env=production --auto-approve
+
+
+mz config --get apiUrl
+# المفروض يطلع: http://localhost:3000/api/v1
+
+
+mz db --status
+
+# المفروض تشوف:
+#   Debug: Testing API connection...
+#   Debug: API URL: http://localhost:3000/api/v1/db
+#   🔐 Authentication...
+#   🗄️  Database Status...
+
+# 1. تأكد إن السيرفر شغال
+cd /workspaces/my-nextjs-project-clean
+npm run dev
+
+# 2. في تيرمينال تاني
+cd /workspaces/mgzon-cli
+mz db --status
+
+# اختبار generate
+mz generate api products --fields="name:string,price:number"
+mz generate component ProductCard
+mz generate model User --fields="name:string,email:string,age:number"
+
+# انتقل لمشروع nextjs وجرب البناء
+cd /path/to/your/nextjs/project
+mz build --analyze
+
+
+
+
+cd /workspaces/mgzon-cli
+npm run build
+
+# جرب الأوامر دي:
+mz apps --list
+# المفروض تشوف:
+#    Debug: API URL: http://localhost:3000/api/v1
+#    Debug: Building API URL: http://localhost:3000/api/v1/apps
+#    Debug: Fetching apps from: http://localhost:3000/api/v1/apps
+
+
+mz config --set apiUrl=http://localhost:3000/api/v1
+mz config --get apiUrl
+
+curl -X POST http://localhost:3000/api/v1/cli/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "mgzon_dev_69406f0dc098d968bd89b03d"}'
+
+
+
+
+
+  cd /workspaces/mgzon-cli
+
+# 1. عدل config.ts
+nano src/utils/config.ts
+
+# غير هذه الأجزاء:
+# - API_URLS كلها تكون localhost
+# - defaultConfig.apiUrl يكون localhost
+
+# 2. بني الـ CLI
+npm run build
+
+# 3. تأكد من الـ config
+./dist/index.js config --get apiUrl
+# المفروض يطلع: http://localhost:3000/api/v1
+
+
+  __  __    ____   _____   ___    _   _      ____   _       ___ 
+ |  \/  |  / ___| |__  /  / _ \  | \ | |    / ___| | |     |_ _|
+ | |\/| | | |  _    / /  | | | | |  \| |   | |     | |      | | 
+ | |  | | | |_| |  / /_  | |_| | | |\  |   | |___  | |___   | | 
+ |_|  |_|  \____| /____|  \___/  |_| \_|    \____| |_____| |___|
+                                                                
+⠹ Logging in...
+   Debug: Using API URL: http://localhost:3000/api/v1
+🔑 Enter your MGZON API Key: [************]
+   Debug: Attempting login with API key: mgzon_de...
+⠹ Validating API key...
+✅ Login successful!
+
+
+cd /workspaces/mgzon-cli
+node -e "
+const { getConfig } = require('./dist/utils/config.js');
+(async () => {
+  const config = await getConfig();
+  console.log('Config:', JSON.stringify(config, null, 2));
+})();
+"
+
+
+# أولاً: نضبط الـ API URL
+mz config --set apiUrl=http://localhost:3000/api/v1
+
+# نجرب login
+mz login
+
+# نتأكد إننا داخلين
+mz whoami
+
+# نجرب logout
+mz logout
+
+# نتأكد إننا خرجنا
+mz whoami  # المفروض يطلع "You are not logged in"
+
+
+cd /workspaces/mgzon-cli
+npm run build
+mz config --set apiUrl=http://localhost:3000/api/v1
+mz config --get apiUrl  # المفروض يطلع: http://localhost:3000/api/v1
+
+
+mz login
+mz whoami
+mz logout
+mz whoami  # المفروض يقولك مش داخل
+
+
+# 1. Build first
+cd /workspaces/mgzon-cli
+npm run build
+
+# 2. Check if logged in
+mz whoami
+
+# 3. Try logout
+mz logout
+
+4. الـ Expected Output:
+إذا كل حاجة تمام:
+
+
+
+✅ Logged out successfully!
+
+──────────────────────────────────────────────────
+🔒 Logout Successful
+──────────────────────────────────────────────────
+   User: user@example.com
+   Name: John Doe
+──────────────────────────────────────────────────
+
+💡 Information:
+   ✓ API key cleared from local storage
+   ✓ Session tokens removed
+   ✓ User data cleared
+──────────────────────────────────────────────────
+
+🚀 Next Steps:
+   To login again: mz login
+
+
+   # 1. نتأكد إن الـ server شغال
+curl http://localhost:3000/api/v1/health
+
+# 2. نجرب الـ login بالـ curl مباشرة
+curl -X POST http://localhost:3000/api/v1/cli/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "your_api_key_here"}'
+
+# 3. نجرب التحقق بالـ curl
+curl -X POST http://localhost:3000/api/v1/auth/verify \
+  -H "Authorization: Bearer your_api_key_here" \
+  -H "Content-Type: application/json"
+
+  # 1. قائمة الملفات
+mz storage --list
+
+# 2. رفع ملف
+mz storage --upload image.jpg
+
+# 3. رفع في folder معين
+mz storage --upload logo.png --folder=logos
+
+# 4. معلومات ملف
+mz storage --info user_123_avatar
+
+# 5. حذف ملف
+mz storage --delete user_123_avatar
+
+# 6. تحديث metadata
+mz storage --update image_123 --tags=avatar,profile
+
+
+mz config --get apiUrl
+mz whoami
+
+
+# قائمة webhooks
+mz webhook --list
+
+# إنشاء webhook عادي
+mz webhook --create
+
+# إنشاء webhook للمطور
+mz webhook --create-dev
+
+# اختبار webhook
+mz webhook --test --event="order.created"
+
+
+إذا كان هناك مشكلة:
+
+
+# تفعيل debug mode
+DEBUG=1 mz webhook --list
+
+# التحقق من الاتصال
+curl http://localhost:3000/api/v1/health
+curl http://localhost:3000/api/v1/webhooks

@@ -103,6 +103,13 @@ program
     }
 });
 program
+    .command('setup')
+    .description('Setup wizard for first-time configuration')
+    .action(async () => {
+    const { setupCommand } = await Promise.resolve().then(() => __importStar(require('./commands/setup')));
+    await setupCommand();
+});
+program
     .command('whoami')
     .description('Show current logged-in user')
     .action(async () => {

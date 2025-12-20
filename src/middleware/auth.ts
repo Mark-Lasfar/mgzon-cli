@@ -1,3 +1,4 @@
+// /workspaces/mgzon-cli/src/middleware/auth.ts
 import chalk from 'chalk';
 import { getApiKey, verifyApiKey, getConfig, getApiUrl } from '../utils/config';
 import axios from 'axios';
@@ -14,10 +15,15 @@ export async function requireAuth(silent = false): Promise<AuthInfo | null> {
     const apiKey = await getApiKey();
     const apiUrl = await getApiUrl();
     
+    if (!silent) {
+      console.log(chalk.gray(`   Debug: API URL: ${apiUrl}`));
+    }
+    
     if (!apiKey) {
       if (!silent) {
         console.log(chalk.yellow('\n⚠️  You are not logged in.'));
         console.log(chalk.cyan('   Run: mz login'));
+        console.log(chalk.cyan(`   API URL: ${apiUrl}`));
         console.log(chalk.cyan('   Or set MGZON_API_KEY environment variable\n'));
         
         const { default: inquirer } = await import('inquirer');
@@ -39,10 +45,16 @@ export async function requireAuth(silent = false): Promise<AuthInfo | null> {
     }
 
     try {
-      // Verify the API key is still valid
-      const response = await axios.post(`${apiUrl}/auth/verify`, {}, {
+      // ✅ إصلاح: نستخدم CLI login endpoint بدلاً من auth/verify
+      if (!silent) {
+        console.log(chalk.gray(`   Debug: Verifying API key via CLI login endpoint`));
+      }
+      
+      // نستخدم CLI login للتحقق بدلاً من auth/verify
+      const response = await axios.post(`${apiUrl}/cli/auth/login`, {
+        apiKey
+      }, {
         headers: { 
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
         timeout: 5000
@@ -53,16 +65,23 @@ export async function requireAuth(silent = false): Promise<AuthInfo | null> {
           apiKey,
           apiUrl,
           user: response.data.data.user,
-          rateLimit: response.data.data.rateLimit
+          rateLimit: response.data.data.apiKey?.rateLimit
         };
       } else {
-        throw new Error('API key verification failed');
+        throw new Error(response.data.error || 'API key verification failed');
       }
       
     } catch (error: any) {
       if (!silent) {
-        console.log(chalk.red('\n❌ Your API key is invalid or expired.'));
-        console.log(chalk.cyan('   Run: mz login'));
+        console.log(chalk.red('\n❌ Authentication failed!'));
+        
+        if (error.response?.status === 401) {
+          console.log(chalk.cyan(`   Invalid API key. Please login again.`));
+        } else {
+          console.log(chalk.cyan(`   Error: ${error.message || 'Unknown error'}`));
+        }
+        
+        console.log(chalk.cyan('\n   Run: mz login to re-authenticate'));
         
         const { default: inquirer } = await import('inquirer');
         const { relogin } = await inquirer.prompt([
@@ -92,6 +111,8 @@ export async function requireAuth(silent = false): Promise<AuthInfo | null> {
   } catch (error: any) {
     if (!silent) {
       console.error(chalk.red('Auth error:'), error.message);
+      console.log(chalk.gray(`   Current API URL: ${await getApiUrl()}`));
+      console.log(chalk.cyan('   Try: mz config --set apiUrl=http://localhost:3000/api/v1'));
     }
     throw error;
   }
@@ -115,10 +136,15 @@ export async function getAuthHeaders() {
 // Helper to build API URLs
 export async function buildApiUrl(endpoint: string): Promise<string> {
   const apiUrl = await getApiUrl();
-  return `${apiUrl}${endpoint}`;
+  const fullUrl = `${apiUrl}${endpoint}`;
+  
+  // ✅ إضافة debug log هنا
+  console.log(chalk.gray(`   Debug: Building API URL: ${fullUrl}`));
+  
+  return fullUrl;
 }
 
-// Get user info from API
+// Get user info from API - تحديث هذه الدالة أيضاً
 export async function getApiUserInfo() {
   const auth = await requireAuth(true);
   
@@ -126,9 +152,11 @@ export async function getApiUserInfo() {
     throw new Error('Not authenticated');
   }
 
-  const response = await axios.post(`${auth.apiUrl}/auth/verify`, {}, {
+  // ✅ إصلاح: نستخدم CLI login endpoint
+  const response = await axios.post(`${auth.apiUrl}/cli/auth/login`, {
+    apiKey: auth.apiKey
+  }, {
     headers: { 
-      'Authorization': `Bearer ${auth.apiKey}`,
       'Content-Type': 'application/json'
     }
   });

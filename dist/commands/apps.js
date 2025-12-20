@@ -15,7 +15,9 @@ async function appsCommand(options) {
         const headers = await (0, auth_1.getAuthHeaders)();
         if (options.list) {
             spinner.text = 'Fetching your apps...';
-            const response = await axios_1.default.get(await (0, auth_1.buildApiUrl)('/apps'), { headers });
+            const apiUrl = await (0, auth_1.buildApiUrl)('/apps');
+            console.log(chalk_1.default.gray(`   Debug: Fetching apps from: ${apiUrl}`));
+            const response = await axios_1.default.get(apiUrl, { headers });
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Failed to fetch apps');
             }
@@ -100,7 +102,9 @@ async function appsCommand(options) {
                 }
             ]);
             spinner.start('Creating app...');
-            const response = await axios_1.default.post(await (0, auth_1.buildApiUrl)('/apps'), {
+            const apiUrl = await (0, auth_1.buildApiUrl)('/apps');
+            console.log(chalk_1.default.gray(`   Debug: Creating app at: ${apiUrl}`));
+            const response = await axios_1.default.post(apiUrl, {
                 name: appName,
                 description: answers.description,
                 targetAudience: answers.targetAudience,
@@ -121,10 +125,10 @@ async function appsCommand(options) {
             console.log(chalk_1.default.green(`Environment: ${newApp.environment}`));
             console.log(chalk_1.default.green(`Type:        ${newApp.targetAudience}`));
             console.log(chalk_1.default.green(`Created:     ${new Date(newApp.createdAt).toLocaleString()}`));
-            if (newApp.credentials) {
+            if (response.data.credentials) {
                 console.log(chalk_1.default.red('\n⚠️  IMPORTANT CREDENTIALS:'));
-                console.log(chalk_1.default.green(`Client ID:     ${newApp.credentials.clientId}`));
-                console.log(chalk_1.default.green(`Client Secret: ${newApp.credentials.clientSecret}`));
+                console.log(chalk_1.default.green(`Client ID:     ${response.data.credentials.clientId}`));
+                console.log(chalk_1.default.green(`Client Secret: ${response.data.credentials.clientSecret}`));
                 console.log(chalk_1.default.red('Save these now - the secret won\'t be shown again!'));
             }
             console.log(chalk_1.default.yellow('\n🚀 Next steps:'));
@@ -136,7 +140,9 @@ async function appsCommand(options) {
         if (options.info) {
             const appId = options.info;
             spinner.text = 'Fetching app details...';
-            const response = await axios_1.default.get(await (0, auth_1.buildApiUrl)(`/apps/${appId}`), { headers });
+            const apiUrl = await (0, auth_1.buildApiUrl)(`/apps/${appId}`);
+            console.log(chalk_1.default.gray(`   Debug: Fetching app details from: ${apiUrl}`));
+            const response = await axios_1.default.get(apiUrl, { headers });
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Failed to fetch app details');
             }
@@ -168,17 +174,21 @@ async function appsCommand(options) {
                 });
             }
             console.log(chalk_1.default.yellow('\n🔗 App URLs:'));
-            console.log(chalk_1.default.cyan(`   Dashboard: https://mgzon.com/developer/apps/${app.slug}`));
+            console.log(chalk_1.default.cyan(`   API Endpoint: ${await (0, auth_1.buildApiUrl)(`/apps/${app._id}`)}`));
             if (app.domain) {
-                console.log(chalk_1.default.cyan(`   Live: https://${app.domain}`));
+                console.log(chalk_1.default.cyan(`   Live URL: https://${app.domain}`));
             }
-            console.log(chalk_1.default.cyan(`   API: ${await (0, auth_1.buildApiUrl)(`/apps/${app._id}`)}`));
+            else if (app.slug) {
+                console.log(chalk_1.default.cyan(`   Development URL: https://${app.slug}.dev.mgzon.app`));
+            }
             return;
         }
         if (options.delete) {
             const appId = options.delete;
             spinner.text = 'Checking app...';
-            const appResponse = await axios_1.default.get(await (0, auth_1.buildApiUrl)(`/apps/${appId}`), { headers });
+            const apiUrl = await (0, auth_1.buildApiUrl)(`/apps/${appId}`);
+            console.log(chalk_1.default.gray(`   Debug: Checking app at: ${apiUrl}`));
+            const appResponse = await axios_1.default.get(apiUrl, { headers });
             if (!appResponse.data.success) {
                 throw new Error('App not found');
             }
@@ -197,7 +207,8 @@ async function appsCommand(options) {
                 return;
             }
             spinner.start('Deleting app...');
-            const deleteResponse = await axios_1.default.delete(await (0, auth_1.buildApiUrl)(`/apps/${appId}`), { headers });
+            console.log(chalk_1.default.gray(`   Debug: Deleting app at: ${apiUrl}`));
+            const deleteResponse = await axios_1.default.delete(apiUrl, { headers });
             if (!deleteResponse.data.success) {
                 throw new Error(deleteResponse.data.error || 'Failed to delete app');
             }
@@ -210,7 +221,9 @@ async function appsCommand(options) {
                 throw new Error('App ID required for domains command');
             }
             spinner.text = 'Fetching app domains...';
-            const response = await axios_1.default.get(await (0, auth_1.buildApiUrl)(`/apps/${appId}/domains`), { headers });
+            const apiUrl = await (0, auth_1.buildApiUrl)(`/apps/${appId}/domains`);
+            console.log(chalk_1.default.gray(`   Debug: Fetching domains from: ${apiUrl}`));
+            const response = await axios_1.default.get(apiUrl, { headers });
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Failed to fetch domains');
             }
@@ -220,8 +233,10 @@ async function appsCommand(options) {
             console.log(chalk_1.default.gray('─'.repeat(60)));
             if (domains.length === 0) {
                 console.log(chalk_1.default.yellow('No domains found. Add one with:'));
-                console.log(chalk_1.default.cyan(`  mz apps --info ${appId}`));
-                console.log(chalk_1.default.cyan('  Then use the add domain button in dashboard'));
+                console.log(chalk_1.default.cyan(`  curl -X POST ${await (0, auth_1.buildApiUrl)(`/apps/${appId}/domains`)} \\`));
+                console.log(chalk_1.default.cyan(`    -H "Authorization: Bearer YOUR_API_KEY" \\`));
+                console.log(chalk_1.default.cyan(`    -H "Content-Type: application/json" \\`));
+                console.log(chalk_1.default.cyan(`    -d '{"domain": "your-domain.com"}'`));
                 return;
             }
             domains.forEach((domain, index) => {
@@ -240,7 +255,9 @@ async function appsCommand(options) {
                 throw new Error('App ID required for logs command');
             }
             spinner.text = 'Fetching app logs...';
-            const response = await axios_1.default.get(await (0, auth_1.buildApiUrl)(`/apps/${appId}/logs`), { headers });
+            const apiUrl = await (0, auth_1.buildApiUrl)(`/apps/${appId}/logs`);
+            console.log(chalk_1.default.gray(`   Debug: Fetching logs from: ${apiUrl}`));
+            const response = await axios_1.default.get(apiUrl, { headers });
             if (!response.data.success) {
                 throw new Error(response.data.error || 'Failed to fetch logs');
             }
@@ -300,6 +317,9 @@ async function appsCommand(options) {
         else {
             console.error(chalk_1.default.red(`  Error: ${error.message}`));
         }
+        console.log(chalk_1.default.gray('\n🔧 Debug Info:'));
+        console.log(chalk_1.default.cyan('   Try: mz config --get apiUrl'));
+        console.log(chalk_1.default.cyan('   Current API URL: ' + (await (0, auth_1.buildApiUrl)('/test').catch(() => 'Unknown'))));
     }
 }
 //# sourceMappingURL=apps.js.map

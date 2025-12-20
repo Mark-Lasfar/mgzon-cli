@@ -13,11 +13,16 @@ async function configCommand(options) {
         const config = await (0, config_1.getConfig)();
         if (options.reset) {
             const defaultConfig = {
-                apiUrl: 'https://api.mgzon.com/v1',
-                defaultEnvironment: 'staging'
+                apiUrl: 'http://localhost:3000/api/v1',
+                defaultEnvironment: 'development'
             };
             await (0, config_1.saveConfig)(defaultConfig);
             spinner.succeed(chalk_1.default.green('✅ Configuration reset to defaults'));
+            console.log(chalk_1.default.gray('\n─'.repeat(40)));
+            console.log(chalk_1.default.cyan('New Configuration:'));
+            console.log(chalk_1.default.cyan(`  apiUrl: http://localhost:3000/api/v1`));
+            console.log(chalk_1.default.cyan(`  defaultEnvironment: development`));
+            console.log(chalk_1.default.gray('─'.repeat(40)));
             return;
         }
         if (options.set) {
@@ -28,6 +33,18 @@ async function configCommand(options) {
             const validKeys = ['apiUrl', 'defaultEnvironment', 'theme', 'editor'];
             if (!validKeys.includes(key)) {
                 throw new Error(`Invalid key. Valid keys: ${validKeys.join(', ')}`);
+            }
+            if (key === 'apiUrl') {
+                try {
+                    const url = new URL(value);
+                    if (!value.includes('/api/v1')) {
+                        console.log(chalk_1.default.yellow('⚠️  Warning: apiUrl should end with /api/v1'));
+                        console.log(chalk_1.default.cyan('   Example: http://localhost:3000/api/v1'));
+                    }
+                }
+                catch {
+                    throw new Error('Invalid URL format');
+                }
             }
             await (0, config_1.saveConfig)({ [key]: value });
             spinner.succeed(chalk_1.default.green(`✅ Set ${key} = ${value}`));
@@ -46,14 +63,33 @@ async function configCommand(options) {
         }
         spinner.stop();
         console.log(chalk_1.default.cyan('\n⚙️  MGZON CLI Configuration\n'));
-        console.log(chalk_1.default.gray('─'.repeat(50)));
+        console.log(chalk_1.default.gray('─'.repeat(60)));
+        console.log(chalk_1.default.gray('Debug Info:'));
+        console.log(chalk_1.default.gray(`  Current Directory: ${process.cwd()}`));
+        console.log(chalk_1.default.gray(`  Config File: ${process.env.HOME}/.mgzon/config.json`));
+        console.log(chalk_1.default.gray('─'.repeat(60)));
         for (const [key, value] of Object.entries(config)) {
             const displayValue = key === 'apiKey' && value
                 ? `${value.substring(0, 10)}...`
                 : value || chalk_1.default.gray('(not set)');
-            console.log(`${chalk_1.default.cyan(key.padEnd(20))}: ${displayValue}`);
+            let valueColor = chalk_1.default.white;
+            if (key === 'apiUrl') {
+                if (value?.includes('localhost')) {
+                    valueColor = chalk_1.default.green;
+                }
+                else if (value?.includes('api.mgzon.com')) {
+                    valueColor = chalk_1.default.yellow;
+                }
+            }
+            console.log(`${chalk_1.default.cyan(key.padEnd(20))}: ${valueColor(displayValue)}`);
         }
-        console.log(chalk_1.default.gray('─'.repeat(50)));
+        console.log(chalk_1.default.gray('─'.repeat(60)));
+        console.log(chalk_1.default.yellow('\n💡 Tips:'));
+        console.log(chalk_1.default.cyan('  For local development:'));
+        console.log(chalk_1.default.gray('    mz config --set apiUrl=http://localhost:3000/api/v1'));
+        console.log(chalk_1.default.cyan('\n  To test API connection:'));
+        console.log(chalk_1.default.gray('    curl http://localhost:3000/api/v1/health'));
+        console.log(chalk_1.default.gray('\n' + '─'.repeat(60)));
         console.log(chalk_1.default.gray('\nUsage:'));
         console.log(chalk_1.default.cyan('  mz config --list                  ') + chalk_1.default.gray('# List all config'));
         console.log(chalk_1.default.cyan('  mz config --set theme=dark        ') + chalk_1.default.gray('# Set a config value'));
@@ -63,6 +99,10 @@ async function configCommand(options) {
     catch (error) {
         spinner.fail(chalk_1.default.red('❌ Config command failed'));
         console.error(chalk_1.default.red(`  Error: ${error.message}`));
+        console.log(chalk_1.default.cyan('\n🔧 Debug Information:'));
+        console.log(chalk_1.default.gray(`  Current dir: ${process.cwd()}`));
+        console.log(chalk_1.default.gray(`  Node version: ${process.version}`));
+        console.log(chalk_1.default.gray(`  Platform: ${process.platform}`));
     }
 }
 //# sourceMappingURL=config.js.map

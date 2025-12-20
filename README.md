@@ -2,6 +2,14 @@
 ```markdown
 # MGZON CLI 🚀
 
+
+  __  __    ____   _____   ___    _   _      ____   _       ___ 
+ |  \/  |  / ___| |__  /  / _ \  | \ | |    / ___| | |     |_ _|
+ | |\/| | | |  _    / /  | | | | |  \| |   | |     | |      | | 
+ | |  | | | |_| |  / /_  | |_| | | |\  |   | |___  | |___   | | 
+ |_|  |_|  \____| /____|  \___/  |_| \_|    \____| |_____| |___|
+ 
+
 The official Command Line Interface for MGZON App Development Platform.
 
 ![MGZON CLI](https://img.shields.io/npm/v/@mgzon/cli.svg)

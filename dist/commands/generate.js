@@ -8,28 +8,11 @@ const chalk_1 = __importDefault(require("chalk"));
 const ora_1 = __importDefault(require("ora"));
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const path_1 = __importDefault(require("path"));
-async function generateWebhook(name, baseDir) {
-    const webhooksDir = path_1.default.join(baseDir, 'src', 'webhooks');
-    await fs_extra_1.default.ensureDir(webhooksDir);
-    const webhookContent = `import { NextRequest, NextResponse } from 'next/server';
-
-export async function POST(req: NextRequest) {
-  const payload = await req.json();
-  
-  console.log('Webhook received:', payload);
-  
-  // Process webhook here
-  
-  return NextResponse.json({ received: true });
-}
-`;
-    await fs_extra_1.default.writeFile(path_1.default.join(webhooksDir, `${name}.ts`), webhookContent);
-    console.log(chalk_1.default.cyan(`  Webhook created: src/webhooks/${name}.ts`));
-}
+const inquirer_1 = __importDefault(require("inquirer"));
 async function generateCommand(type, options) {
     const spinner = (0, ora_1.default)(`Generating ${type}...`).start();
     try {
-        const name = options.name || 'unnamed';
+        const name = options.name || await promptForName(type);
         const baseDir = process.cwd();
         switch (type.toLowerCase()) {
             case 'model':
@@ -44,83 +27,361 @@ async function generateCommand(type, options) {
             case 'webhook':
                 await generateWebhook(name, baseDir);
                 break;
+            case 'page':
+                await generatePage(name, baseDir);
+                break;
+            case 'layout':
+                await generateLayout(name, baseDir);
+                break;
             default:
                 spinner.fail(chalk_1.default.red(`Unknown type: ${type}`));
-                console.log(chalk_1.default.yellow('Available types: model, component, api, webhook'));
+                console.log(chalk_1.default.yellow('\nAvailable types:'));
+                console.log(chalk_1.default.cyan('  model      - Database model'));
+                console.log(chalk_1.default.cyan('  component  - React component'));
+                console.log(chalk_1.default.cyan('  api        - API route handler'));
+                console.log(chalk_1.default.cyan('  webhook    - Webhook handler'));
+                console.log(chalk_1.default.cyan('  page       - Next.js page'));
+                console.log(chalk_1.default.cyan('  layout     - Next.js layout\n'));
                 return;
         }
-        spinner.succeed(chalk_1.default.green(`${type} generated successfully!`));
+        spinner.succeed(chalk_1.default.green(`✅ ${type} generated successfully!`));
+        console.log(chalk_1.default.gray('   Debug: Generated in ' + baseDir));
+        console.log(chalk_1.default.yellow('\n💡 Next Steps:'));
+        switch (type.toLowerCase()) {
+            case 'model':
+                console.log(chalk_1.default.cyan('   1. Import the model in your API routes'));
+                console.log(chalk_1.default.cyan('   2. Add validation and methods'));
+                console.log(chalk_1.default.cyan('   3. Create database migrations\n'));
+                break;
+            case 'component':
+                console.log(chalk_1.default.cyan('   1. Import the component in your pages'));
+                console.log(chalk_1.default.cyan('   2. Add props and styling'));
+                console.log(chalk_1.default.cyan('   3. Export from index.ts\n'));
+                break;
+            case 'api':
+                console.log(chalk_1.default.cyan('   1. Test the API endpoint:'));
+                console.log(chalk_1.default.cyan('      curl http://localhost:3000/api/' + name));
+                console.log(chalk_1.default.cyan('   2. Add validation and business logic'));
+                console.log(chalk_1.default.cyan('   3. Add authentication if needed\n'));
+                break;
+            case 'webhook':
+                console.log(chalk_1.default.cyan('   1. Configure webhook URL in MGZON dashboard'));
+                console.log(chalk_1.default.cyan('   2. Test with: mz webhook --simulate'));
+                console.log(chalk_1.default.cyan('   3. Add error handling and logging\n'));
+                break;
+        }
     }
     catch (error) {
-        spinner.fail(chalk_1.default.red(`Failed to generate ${type}`));
-        console.error(chalk_1.default.red(error.message));
+        spinner.fail(chalk_1.default.red(`❌ Failed to generate ${type}`));
+        console.error(chalk_1.default.red(`  Error: ${error.message}`));
+        if (error.code === 'EEXIST') {
+            console.log(chalk_1.default.yellow('  File already exists. Use a different name.'));
+        }
     }
+}
+async function promptForName(type) {
+    const answers = await inquirer_1.default.prompt([
+        {
+            type: 'input',
+            name: 'name',
+            message: `Enter ${type} name:`,
+            validate: (input) => {
+                if (!input || input.trim().length < 2) {
+                    return `${type} name must be at least 2 characters`;
+                }
+                if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(input)) {
+                    return `${type} name must start with a letter and contain only letters and numbers`;
+                }
+                return true;
+            }
+        }
+    ]);
+    return answers.name;
 }
 async function generateModel(name, fields, baseDir) {
     const modelsDir = path_1.default.join(baseDir, 'src', 'models');
     await fs_extra_1.default.ensureDir(modelsDir);
     const fieldDefinitions = parseFields(fields);
+    const modelName = name.charAt(0).toUpperCase() + name.slice(1);
     const modelContent = `import mongoose from 'mongoose';
 
+export interface I${modelName} extends mongoose.Document {
+  ${fieldDefinitions.map(f => `${f.name}: ${getTypeScriptType(f.type)}`).join(';\n  ')}
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const ${name}Schema = new mongoose.Schema({
-  ${fieldDefinitions.map(f => `${f.name}: ${f.type}`).join(',\n  ')}
+  ${fieldDefinitions.map(f => `  ${f.name}: { type: ${f.type}, ${getFieldOptions(f)} }`).join(',\n  ')}
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-export default mongoose.models.${name} || mongoose.model('${name}', ${name}Schema);
+${name}Schema.index({ createdAt: -1 });
+${name}Schema.index({ updatedAt: -1 });
+
+// Add methods and statics here if needed
+// ${name}Schema.methods.someMethod = function() {};
+
+export default mongoose.models.${modelName} || mongoose.model<I${modelName}>('${modelName}', ${name}Schema);
 `;
-    await fs_extra_1.default.writeFile(path_1.default.join(modelsDir, `${name}.ts`), modelContent);
-    console.log(chalk_1.default.cyan(`  Model created: src/models/${name}.ts`));
+    const modelFile = path_1.default.join(modelsDir, `${name}.model.ts`);
+    await fs_extra_1.default.writeFile(modelFile, modelContent);
+    console.log(chalk_1.default.cyan(`  Model created: src/models/${name}.model.ts`));
+    const indexFile = path_1.default.join(modelsDir, 'index.ts');
+    const indexContent = `// Export all models
+export { default as ${modelName} } from './${name}.model';
+`;
+    if (!await fs_extra_1.default.pathExists(indexFile)) {
+        await fs_extra_1.default.writeFile(indexFile, indexContent);
+    }
+    else {
+        const currentContent = await fs_extra_1.default.readFile(indexFile, 'utf8');
+        if (!currentContent.includes(`export { default as ${modelName}`)) {
+            await fs_extra_1.default.appendFile(indexFile, `\nexport { default as ${modelName} } from './${name}.model';`);
+        }
+    }
 }
 async function generateComponent(name, baseDir) {
     const componentsDir = path_1.default.join(baseDir, 'src', 'components');
     await fs_extra_1.default.ensureDir(componentsDir);
+    const componentName = name.charAt(0).toUpperCase() + name.slice(1);
     const componentContent = `'use client';
 
 import { cn } from '@/lib/utils';
 
-interface ${name}Props {
+export interface ${componentName}Props {
   className?: string;
+  children?: React.ReactNode;
 }
 
-export default function ${name}({ className }: ${name}Props) {
+export default function ${componentName}({ 
+  className,
+  children 
+}: ${componentName}Props) {
   return (
-    <div className={cn('', className)}>
-      <h2>${name} Component</h2>
+    <div className={cn('p-4 border rounded-lg', className)}>
+      <h2 className="text-xl font-semibold mb-2">${componentName}</h2>
+      <div className="text-gray-600">
+        {children || 'This is the ${componentName} component'}
+      </div>
     </div>
   );
 }
 `;
-    await fs_extra_1.default.writeFile(path_1.default.join(componentsDir, `${name}.tsx`), componentContent);
-    console.log(chalk_1.default.cyan(`  Component created: src/components/${name}.tsx`));
+    const componentFile = path_1.default.join(componentsDir, `${componentName}.tsx`);
+    await fs_extra_1.default.writeFile(componentFile, componentContent);
+    console.log(chalk_1.default.cyan(`  Component created: src/components/${componentName}.tsx`));
+    const indexFile = path_1.default.join(componentsDir, 'index.ts');
+    const indexContent = `// Export all components
+export { default as ${componentName} } from './${componentName}';
+`;
+    if (!await fs_extra_1.default.pathExists(indexFile)) {
+        await fs_extra_1.default.writeFile(indexFile, indexContent);
+    }
+    else {
+        const currentContent = await fs_extra_1.default.readFile(indexFile, 'utf8');
+        if (!currentContent.includes(`export { default as ${componentName}`)) {
+            await fs_extra_1.default.appendFile(indexFile, `\nexport { default as ${componentName} } from './${componentName}';`);
+        }
+    }
 }
 async function generateApi(name, baseDir) {
     const apiDir = path_1.default.join(baseDir, 'src', 'app', 'api', name);
     await fs_extra_1.default.ensureDir(apiDir);
     const routeContent = `import { NextRequest, NextResponse } from 'next/server';
+import { withApiKeyAuth } from '@/lib/api/middleware/auth';
 
+// GET /api/${name}
 export async function GET(req: NextRequest) {
-  return NextResponse.json({
-    message: '${name} API endpoint',
-    timestamp: new Date().toISOString()
-  });
+  try {
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: '${name} API endpoint',
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error: any) {
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 });
+  }
 }
+
+// POST /api/${name}
+export const POST = withApiKeyAuth(async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: '${name} created successfully',
+        data: body,
+        timestamp: new Date().toISOString()
+      }
+    }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 });
+  }
+});
+
+// PUT /api/${name}
+export const PUT = withApiKeyAuth(async function PUT(req: NextRequest) {
+  return NextResponse.json({
+    success: true,
+    data: { message: '${name} updated' }
+  });
+});
+
+// DELETE /api/${name}
+export const DELETE = withApiKeyAuth(async function DELETE(req: NextRequest) {
+  return NextResponse.json({
+    success: true,
+    data: { message: '${name} deleted' }
+  });
+});
+`;
+    const routeFile = path_1.default.join(apiDir, 'route.ts');
+    await fs_extra_1.default.writeFile(routeFile, routeContent);
+    console.log(chalk_1.default.cyan(`  API route created: src/app/api/${name}/route.ts`));
+    console.log(chalk_1.default.gray(`   URL: http://localhost:3000/api/${name}`));
+}
+async function generateWebhook(name, baseDir) {
+    const webhooksDir = path_1.default.join(baseDir, 'src', 'app', 'api', 'webhooks');
+    await fs_extra_1.default.ensureDir(webhooksDir);
+    const webhookContent = `import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  return NextResponse.json({
-    message: '${name} created',
-    data: body
-  });
+  try {
+    // Verify webhook signature
+    const signature = req.headers.get('x-webhook-signature');
+    const payload = await req.text();
+    
+    if (!WEBHOOK_SECRET) {
+      return NextResponse.json({
+        error: 'Webhook secret not configured'
+      }, { status: 500 });
+    }
+    
+    // Verify signature
+    const expectedSignature = crypto
+      .createHmac('sha256', WEBHOOK_SECRET)
+      .update(payload)
+      .digest('hex');
+    
+    if (signature !== expectedSignature) {
+      return NextResponse.json({
+        error: 'Invalid signature'
+      }, { status: 401 });
+    }
+    
+    const data = JSON.parse(payload);
+    console.log('Webhook received:', data);
+    
+    // Process webhook based on event type
+    switch (data.event) {
+      case '${name}.created':
+        // Handle creation
+        break;
+      
+      case '${name}.updated':
+        // Handle update
+        break;
+      
+      case '${name}.deleted':
+        // Handle deletion
+        break;
+      
+      default:
+        console.log('Unknown event type:', data.event);
+    }
+    
+    return NextResponse.json({ 
+      success: true,
+      received: true 
+    });
+    
+  } catch (error: any) {
+    console.error('Webhook processing error:', error);
+    return NextResponse.json({
+      error: error.message
+    }, { status: 500 });
+  }
 }
 `;
-    await fs_extra_1.default.writeFile(path_1.default.join(apiDir, 'route.ts'), routeContent);
-    console.log(chalk_1.default.cyan(`  API created: src/app/api/${name}/route.ts`));
+    const webhookFile = path_1.default.join(webhooksDir, `${name}.ts`);
+    await fs_extra_1.default.writeFile(webhookFile, webhookContent);
+    console.log(chalk_1.default.cyan(`  Webhook handler created: src/app/api/webhooks/${name}.ts`));
+    console.log(chalk_1.default.gray(`   URL: http://localhost:3000/api/webhooks/${name}`));
+    console.log(chalk_1.default.yellow('   ⚠️  Remember to set WEBHOOK_SECRET environment variable'));
+}
+async function generatePage(name, baseDir) {
+    const pagesDir = path_1.default.join(baseDir, 'src', 'app');
+    await fs_extra_1.default.ensureDir(pagesDir);
+    const pageContent = `export default function ${name.charAt(0).toUpperCase() + name.slice(1)}Page() {
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">${name}</h1>
+      <p className="text-gray-600">
+        This is the ${name} page.
+      </p>
+    </div>
+  );
+}
+`;
+    const pageFile = path_1.default.join(pagesDir, `${name}`, 'page.tsx');
+    await fs_extra_1.default.ensureDir(path_1.default.dirname(pageFile));
+    await fs_extra_1.default.writeFile(pageFile, pageContent);
+    console.log(chalk_1.default.cyan(`  Page created: src/app/${name}/page.tsx`));
+    console.log(chalk_1.default.gray(`   URL: http://localhost:3000/${name}`));
+}
+async function generateLayout(name, baseDir) {
+    const layoutsDir = path_1.default.join(baseDir, 'src', 'app');
+    await fs_extra_1.default.ensureDir(layoutsDir);
+    const layoutContent = `import { ReactNode } from 'react';
+
+export default function ${name.charAt(0).toUpperCase() + name.slice(1)}Layout({
+  children
+}: {
+  children: ReactNode
+}) {
+  return (
+    <div className="${name}-layout">
+      <header className="bg-gray-800 text-white p-4">
+        <h1 className="text-2xl font-bold">${name}</h1>
+      </header>
+      <main className="p-4">
+        {children}
+      </main>
+      <footer className="bg-gray-100 p-4 text-center">
+        <p className="text-gray-600">&copy; ${new Date().getFullYear()} MGZON App</p>
+      </footer>
+    </div>
+  );
+}
+`;
+    const layoutFile = path_1.default.join(layoutsDir, `${name}`, 'layout.tsx');
+    await fs_extra_1.default.ensureDir(path_1.default.dirname(layoutFile));
+    await fs_extra_1.default.writeFile(layoutFile, layoutContent);
+    console.log(chalk_1.default.cyan(`  Layout created: src/app/${name}/layout.tsx`));
 }
 function parseFields(fieldsString) {
     if (!fieldsString)
-        return [{ name: 'name', type: 'String' }];
+        return [
+            { name: 'name', type: 'String' },
+            { name: 'description', type: 'String' }
+        ];
     return fieldsString.split(',').map(field => {
         const [name, type] = field.split(':').map(s => s.trim());
         return {
@@ -128,5 +389,36 @@ function parseFields(fieldsString) {
             type: type || 'String'
         };
     });
+}
+function getTypeScriptType(mongooseType) {
+    const typeMap = {
+        'String': 'string',
+        'Number': 'number',
+        'Boolean': 'boolean',
+        'Date': 'Date',
+        'Buffer': 'Buffer',
+        'ObjectId': 'mongoose.Types.ObjectId',
+        'Mixed': 'any',
+        'Array': 'any[]',
+        'Decimal128': 'number',
+        'Map': 'Map<string, any>'
+    };
+    return typeMap[mongooseType] || 'any';
+}
+function getFieldOptions(field) {
+    const options = [];
+    if (field.name === 'name' || field.name === 'email') {
+        options.push('required: true');
+    }
+    if (field.name === 'email' || field.name === 'username') {
+        options.push('unique: true');
+    }
+    if (field.type === 'String') {
+        options.push('trim: true');
+    }
+    if (field.type === 'Boolean') {
+        options.push('default: false');
+    }
+    return options.join(', ');
 }
 //# sourceMappingURL=generate.js.map

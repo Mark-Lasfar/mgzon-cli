@@ -34,6 +34,7 @@ async function debugAll(spinner) {
     spinner.text = 'Gathering debug information...';
     const config = await (0, config_1.getConfig)();
     const apiKey = await (0, config_1.getApiKey)();
+    const apiUrl = await (0, config_1.getApiUrl)();
     spinner.succeed(chalk_1.default.green('✅ Debug information collected'));
     console.log(chalk_1.default.cyan('\n🐛 Debug Information\n'));
     console.log(chalk_1.default.gray('═'.repeat(60)));
@@ -51,17 +52,28 @@ async function debugAll(spinner) {
     console.log(chalk_1.default.gray('─'.repeat(40)));
     console.log(chalk_1.default.cyan(`Authenticated: ${apiKey ? 'Yes' : 'No'}`));
     console.log(chalk_1.default.cyan(`API Key length: ${apiKey ? apiKey.length : 'N/A'}`));
-    console.log(chalk_1.default.cyan(`API URL:       ${config.apiUrl || 'Default'}`));
+    console.log(chalk_1.default.cyan(`API URL:       ${apiUrl}`));
+    console.log(chalk_1.default.cyan(`Config URL:    ${config.apiUrl || 'Default'}`));
     console.log(chalk_1.default.cyan(`Environment:   ${config.defaultEnvironment || 'Default'}`));
     console.log(chalk_1.default.bold('\n🌐 Network Information'));
     console.log(chalk_1.default.gray('─'.repeat(40)));
     try {
-        const response = await axios_1.default.get('https://api.mgzon.com/v1/health', { timeout: 5000 });
-        console.log(chalk_1.default.green(`MGZON API:     Reachable (${response.status})`));
-        console.log(chalk_1.default.cyan(`Response time: ${response.headers['x-response-time'] || 'N/A'}`));
+        const apiTest = await (0, config_1.testApiConnection)();
+        if (apiTest.success) {
+            console.log(chalk_1.default.green(`MGZON API:     Reachable (${apiTest.url})`));
+            const start = Date.now();
+            await axios_1.default.get(`${apiUrl}/health`, { timeout: 5000 });
+            const end = Date.now();
+            console.log(chalk_1.default.cyan(`Response time: ${end - start}ms`));
+        }
+        else {
+            console.log(chalk_1.default.red(`MGZON API:     Unreachable (${apiTest.url})`));
+            console.log(chalk_1.default.red(`Error:         ${apiTest.error || 'Unknown'}`));
+        }
     }
     catch (error) {
-        console.log(chalk_1.default.red(`MGZON API:     Unreachable (${error.message})`));
+        console.log(chalk_1.default.red(`MGZON API:     Unreachable (${apiUrl})`));
+        console.log(chalk_1.default.red(`Error:         ${error.message}`));
     }
     console.log(chalk_1.default.bold('\n💾 Memory Usage'));
     console.log(chalk_1.default.gray('─'.repeat(40)));
@@ -72,71 +84,167 @@ async function debugAll(spinner) {
     console.log(chalk_1.default.bold('\n📁 Current Directory'));
     console.log(chalk_1.default.gray('─'.repeat(40)));
     console.log(chalk_1.default.cyan(`Path: ${process.cwd()}`));
+    console.log(chalk_1.default.bold('\n⚙️  Configuration Test'));
+    console.log(chalk_1.default.gray('─'.repeat(40)));
+    const testEndpoints = [
+        { name: 'Auth Verify', endpoint: '/auth/verify' },
+        { name: 'Health Check', endpoint: '/health' },
+        { name: 'Apps List', endpoint: '/apps' },
+        { name: 'Keys List', endpoint: '/keys' }
+    ];
+    for (const test of testEndpoints) {
+        try {
+            const response = await axios_1.default.get(`${apiUrl}${test.endpoint}`, {
+                timeout: 3000,
+                validateStatus: () => true
+            });
+            if (response.status === 200 || response.status === 401) {
+                console.log(chalk_1.default.green(`  ${test.name.padEnd(15)}: ✅ Reachable (${response.status})`));
+            }
+            else {
+                console.log(chalk_1.default.yellow(`  ${test.name.padEnd(15)}: ⚠️  Responded (${response.status})`));
+            }
+        }
+        catch (error) {
+            console.log(chalk_1.default.red(`  ${test.name.padEnd(15)}: ❌ Unreachable`));
+        }
+    }
     console.log(chalk_1.default.gray('\n═'.repeat(60)));
     console.log(chalk_1.default.yellow('\n💡 Tips:'));
     console.log(chalk_1.default.cyan('  mz debug --network       # Network diagnostics'));
     console.log(chalk_1.default.cyan('  mz debug --performance   # Performance metrics'));
-    console.log(chalk_1.default.cyan('  mz debug --memory        # Memory usage details\n'));
+    console.log(chalk_1.default.cyan('  mz debug --memory        # Memory usage details'));
+    console.log(chalk_1.default.cyan('\n🔧 Quick Fixes:'));
+    console.log(chalk_1.default.gray('  mz config --set apiUrl=http://localhost:3000/api/v1'));
+    console.log(chalk_1.default.gray('  mz config --reset'));
+    console.log(chalk_1.default.gray('  export MGZON_API_KEY="your_api_key"\n'));
 }
 async function debugNetwork(spinner) {
     spinner.text = 'Running network diagnostics...';
+    const apiUrl = await (0, config_1.getApiUrl)();
     const tests = [
         { name: 'DNS Resolution', url: 'https://google.com' },
-        { name: 'MGZON API', url: 'https://api.mgzon.com/v1/health' },
-        { name: 'NPM Registry', url: 'https://registry.npmjs.org' }
+        { name: 'MGZON API', url: `${apiUrl}/health` },
+        { name: 'NPM Registry', url: 'https://registry.npmjs.org' },
+        { name: 'CLI Login', url: `${apiUrl}/cli/auth/login` },
+        { name: 'Auth Verify', url: `${apiUrl}/auth/verify` }
     ];
     const results = [];
     for (const test of tests) {
         try {
             const start = Date.now();
-            await axios_1.default.get(test.url, { timeout: 10000 });
-            const end = Date.now();
-            results.push({
-                name: test.name,
-                status: '✅ Reachable',
-                time: `${end - start}ms`
+            const response = await axios_1.default.get(test.url, {
+                timeout: 5000,
+                validateStatus: () => true
             });
+            const end = Date.now();
+            if (response.status === 200 || response.status === 401 || response.status === 404) {
+                results.push({
+                    name: test.name,
+                    status: '✅ Reachable',
+                    time: `${end - start}ms`,
+                    statusCode: response.status
+                });
+            }
+            else {
+                results.push({
+                    name: test.name,
+                    status: '⚠️  Responded',
+                    time: `${end - start}ms`,
+                    statusCode: response.status
+                });
+            }
         }
         catch (error) {
             results.push({
                 name: test.name,
                 status: '❌ Unreachable',
-                time: error.message
+                time: error.message,
+                statusCode: null
             });
         }
     }
     spinner.succeed(chalk_1.default.green('Network diagnostics completed'));
     console.log(chalk_1.default.cyan('\n🌐 Network Diagnostics\n'));
-    console.log(chalk_1.default.gray('─'.repeat(60)));
+    console.log(chalk_1.default.gray('─'.repeat(80)));
     results.forEach(result => {
-        console.log(`${chalk_1.default.cyan(result.name.padEnd(20))}: ${result.status} (${result.time})`);
+        const statusColor = result.status.includes('✅') ? 'green' :
+            result.status.includes('⚠️') ? 'yellow' : 'red';
+        console.log(`${chalk_1.default.cyan(result.name.padEnd(20))}: ${chalk_1.default[statusColor](result.status)} ${result.statusCode ? `(${result.statusCode})` : ''} - ${result.time}`);
     });
-    console.log(chalk_1.default.gray('\n─'.repeat(60)));
+    console.log(chalk_1.default.gray('\n─'.repeat(80)));
     console.log(chalk_1.default.bold('\n📡 Network Interfaces'));
+    console.log(chalk_1.default.gray('─'.repeat(40)));
     const nets = (0, os_1.networkInterfaces)();
+    let hasInterfaces = false;
     for (const name of Object.keys(nets)) {
         const netInfo = nets[name];
         if (netInfo) {
+            hasInterfaces = true;
             console.log(chalk_1.default.cyan(`\n${name}:`));
             netInfo.forEach(net => {
                 if (net.family === 'IPv4') {
-                    console.log(chalk_1.default.gray(`  ${net.address}`));
+                    console.log(chalk_1.default.gray(`  ${net.address} ${net.internal ? '(internal)' : ''}`));
                 }
             });
         }
     }
-    console.log(chalk_1.default.gray('\n─'.repeat(60)));
+    if (!hasInterfaces) {
+        console.log(chalk_1.default.yellow('  No network interfaces found'));
+    }
+    console.log(chalk_1.default.gray('\n─'.repeat(80)));
+    console.log(chalk_1.default.bold('\n🔗 Suggested API URLs'));
+    console.log(chalk_1.default.gray('─'.repeat(40)));
+    const suggestedUrls = [
+        'http://localhost:3000/api/v1',
+        'http://127.0.0.1:3000/api/v1',
+        'http://0.0.0.0:3000/api/v1'
+    ];
+    for (const url of suggestedUrls) {
+        try {
+            const start = Date.now();
+            await axios_1.default.get(`${url}/health`, { timeout: 2000 });
+            const end = Date.now();
+            console.log(chalk_1.default.green(`  ✅ ${url} - ${end - start}ms`));
+        }
+        catch (error) {
+            console.log(chalk_1.default.red(`  ❌ ${url} - Unreachable`));
+        }
+    }
+    console.log(chalk_1.default.gray('\n─'.repeat(80)));
+    console.log(chalk_1.default.cyan('\n💡 Command to fix:'));
+    console.log(chalk_1.default.gray('  mz config --set apiUrl=http://localhost:3000/api/v1'));
+    console.log(chalk_1.default.gray('  mz config --list\n'));
 }
 async function debugPerformance(spinner) {
     spinner.text = 'Measuring performance...';
+    const apiUrl = await (0, config_1.getApiUrl)();
     const metrics = {
         cliStartup: 'Fast',
         commandExecution: 'Fast',
-        apiResponse: 'Good'
+        apiResponse: 'Unknown',
+        localhostPing: 'Unknown'
     };
     try {
         const start = Date.now();
-        await axios_1.default.get('https://api.mgzon.com/v1/health', { timeout: 5000 });
+        await axios_1.default.get('http://localhost:3000/api/v1/health', {
+            timeout: 3000,
+            validateStatus: () => true
+        });
+        const localhostTime = Date.now() - start;
+        metrics.localhostPing = localhostTime < 100 ? 'Excellent' :
+            localhostTime < 300 ? 'Good' :
+                localhostTime < 1000 ? 'Slow' : 'Poor';
+    }
+    catch {
+        metrics.localhostPing = 'Unreachable';
+    }
+    try {
+        const start = Date.now();
+        await axios_1.default.get(`${apiUrl}/health`, {
+            timeout: 5000,
+            validateStatus: () => true
+        });
         const apiTime = Date.now() - start;
         metrics.apiResponse = apiTime < 500 ? 'Excellent' :
             apiTime < 1000 ? 'Good' :
@@ -147,14 +255,23 @@ async function debugPerformance(spinner) {
     }
     spinner.succeed(chalk_1.default.green('Performance metrics collected'));
     console.log(chalk_1.default.cyan('\n⚡ Performance Metrics\n'));
-    console.log(chalk_1.default.gray('─'.repeat(50)));
+    console.log(chalk_1.default.gray('─'.repeat(60)));
+    console.log(chalk_1.default.cyan(`API URL: ${apiUrl}`));
+    console.log(chalk_1.default.gray('─'.repeat(60)));
     Object.entries(metrics).forEach(([key, value]) => {
         const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
         const color = value === 'Excellent' || value === 'Fast' ? 'green' :
             value === 'Good' ? 'cyan' :
-                value === 'Slow' ? 'yellow' : 'red';
+                value === 'Slow' ? 'yellow' :
+                    value === 'Unreachable' || value === 'Unavailable' ? 'red' : 'gray';
         console.log(`${chalk_1.default.cyan(label.padEnd(25))}: ${chalk_1.default[color](value)}`);
     });
+    console.log(chalk_1.default.gray('─'.repeat(60)));
+    console.log(chalk_1.default.cyan('\n🎯 Performance Guide:'));
+    console.log(chalk_1.default.gray('  < 100ms:  Excellent'));
+    console.log(chalk_1.default.gray('  100-300ms: Good'));
+    console.log(chalk_1.default.gray('  300-1000ms: Slow'));
+    console.log(chalk_1.default.gray('  > 1000ms:  Poor\n'));
 }
 async function debugMemory(spinner) {
     spinner.text = 'Analyzing memory usage...';
@@ -169,12 +286,31 @@ async function debugMemory(spinner) {
     console.log(chalk_1.default.cyan(`External:                    ${formatMB(memoryUsage.external)}`));
     console.log(chalk_1.default.cyan(`Array Buffers:               ${formatMB(memoryUsage.arrayBuffers)}`));
     const heapUsedPercent = Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100);
-    console.log(chalk_1.default.cyan(`Heap Usage:                  ${heapUsedPercent}%`));
+    const heapColor = heapUsedPercent < 70 ? 'green' :
+        heapUsedPercent < 85 ? 'yellow' : 'red';
+    console.log(chalk_1.default[heapColor](`Heap Usage:                  ${heapUsedPercent}%`));
     console.log(chalk_1.default.gray('\n─'.repeat(50)));
     console.log(chalk_1.default.yellow('\n💡 Memory Usage Guide:'));
-    console.log(chalk_1.default.gray('  < 70%: Excellent'));
-    console.log(chalk_1.default.gray('  70-85%: Good'));
-    console.log(chalk_1.default.gray('  85-95%: Monitor'));
-    console.log(chalk_1.default.gray('  > 95%:  Warning\n'));
+    console.log(chalk_1.default.gray('  < 70%:  ✅ Excellent'));
+    console.log(chalk_1.default.gray('  70-85%: ⚠️  Monitor'));
+    console.log(chalk_1.default.gray('  85-95%: ⚠️  Warning'));
+    console.log(chalk_1.default.gray('  > 95%:  ❌ Critical'));
+    console.log(chalk_1.default.gray('\n─'.repeat(50)));
+    console.log(chalk_1.default.bold('\n⚙️  CLI Configuration'));
+    console.log(chalk_1.default.gray('─'.repeat(30)));
+    try {
+        const config = await (0, config_1.getConfig)();
+        const configSize = Buffer.byteLength(JSON.stringify(config));
+        console.log(chalk_1.default.cyan(`Config size: ${Math.round(configSize / 1024)} KB`));
+        console.log(chalk_1.default.cyan(`API Key: ${config.apiKey ? '✅ Set' : '❌ Not set'}`));
+        console.log(chalk_1.default.cyan(`API URL: ${config.apiUrl || 'Default'}`));
+    }
+    catch (error) {
+        console.log(chalk_1.default.red(`Config error: ${error.message}`));
+    }
+    console.log(chalk_1.default.gray('\n─'.repeat(50)));
+    console.log(chalk_1.default.cyan('\n🔧 Command to clear cache:'));
+    console.log(chalk_1.default.gray('  mz config --reset'));
+    console.log(chalk_1.default.gray('  mz logout\n'));
 }
 //# sourceMappingURL=debug.js.map

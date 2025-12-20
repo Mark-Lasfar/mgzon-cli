@@ -13,7 +13,7 @@ console.log(
 );
 
 // Check for updates (async, won't block)
-checkForUpdates().catch(() => {});
+checkForUpdates().catch(() => { });
 
 const program = new Command();
 
@@ -33,19 +33,19 @@ ${chalk.gray('─'.repeat(50))}
 `)
   .hook('preAction', async (thisCommand, actionCommand) => {
     const commandName = actionCommand.name();
-    
+
     // Skip auth check if no command name (shouldn't happen but just in case)
     if (!commandName) {
       return;
     }
-    
+
     // Skip auth check for these commands
     const skipAuthCommands = ['login', 'logout', 'whoami', 'help', '--help', '-h', '--version', '-v', 'docs', 'support', 'update'];
-    
+
     if (skipAuthCommands.includes(commandName)) {
       return;
     }
-    
+
     // Check authentication
     try {
       const { requireAuth } = await import('./middleware/auth');
@@ -85,12 +85,21 @@ program
   });
 
 program
+  .command('setup')
+  .description('Setup wizard for first-time configuration')
+  .action(async () => {
+    const { setupCommand } = await import('./commands/setup');
+    await setupCommand();
+  });
+
+
+program
   .command('whoami')
   .description('Show current logged-in user')
   .action(async () => {
     const { getUserInfo } = await import('./utils/config');
     const userInfo = await getUserInfo();
-    
+
     if (userInfo.email) {
       console.log(chalk.green('\n' + '─'.repeat(50)));
       console.log(chalk.green('✅ You are logged in:'));
@@ -99,7 +108,7 @@ program
       console.log(chalk.cyan(`   📧 Email: ${userInfo.email}`));
       console.log(chalk.cyan(`   🆔 User ID: ${userInfo.userId || 'Not available'}`));
       console.log(chalk.cyan(`   🎯 Role: ${userInfo.role || 'Developer'}`));
-      
+
       if (userInfo.isDeveloper) {
         console.log(chalk.cyan('   🛠️  Type: Developer'));
       }
@@ -256,7 +265,7 @@ program
     console.log(chalk.cyan('\n' + '─'.repeat(50)));
     console.log(chalk.cyan('🔄 Updating MGZON CLI...'));
     console.log(chalk.cyan('─'.repeat(50)));
-    
+
     const { execSync } = await import('child_process');
     try {
       execSync('npm install -g @mgzon/cli@latest', { stdio: 'inherit' });
@@ -289,10 +298,10 @@ program
   .action(async (options) => {
     try {
       const open = (await import('open')).default;
-      const url = options.offline 
+      const url = options.offline
         ? 'https://docs.mgzon.com/cli/offline'
         : 'https://docs.mgzon.com/cli';
-      
+
       await open(url);
       console.log(chalk.green(`\n✅ Opening documentation at ${url}\n`));
     } catch (error: any) {
