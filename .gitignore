@@ -1,7 +1,6 @@
 node_modules/
 dist/
 bin/
-releases/
 
 .DS_Store
 .env
