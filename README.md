@@ -81,9 +81,9 @@ mgzon --version
 
 For users who prefer a graphical interface, download the MGZON GUI app:
 
-- **Linux**: [Download AppImage](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON%20GUI-1.0.0.AppImage)
-- **macOS**: [Download DMG](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON%20GUI-1.0.0.dmg)  
-- **Windows**: [Download EXE](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON%20GUI.exe)
+- **Linux**: [Download AppImage](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON.GUI-1.0.0.AppImage)
+- **macOS**: [Download DMG](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON.GUI-1.0.0.dmg)  
+- **Windows**: [Download EXE](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON.GUI.exe)
 
 The GUI provides the same functionality as the CLI but with a user-friendly interface.
 
@@ -102,8 +102,8 @@ The GUI automatically detects and uses the bundled CLI executable for all operat
 
 **Linux (AppImage):**
 ```bash
-chmod +x MGZON-GUI-1.0.0.AppImage
-./MGZON-GUI-1.0.0.AppImage
+chmod +x MGZON.GUI-1.0.0.AppImage
+./MGZON.GUI-1.0.0.AppImage
 ```
 
 **macOS (DMG):**
