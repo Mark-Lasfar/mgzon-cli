@@ -1,0 +1,301 @@
+---
+title: User Flow Guide
+description: Step-by-step user workflows for MGZON CLI and GUI
+---
+
+# User Flow Guide
+
+This guide walks through typical user workflows for both CLI and GUI interfaces, from initial setup to advanced operations.
+
+## Authentication Flow
+
+### CLI Authentication
+
+```bash
+# Start the login process
+mz login
+
+# The CLI will:
+# 1. Open your default browser
+# 2. Navigate to MGZON authentication page
+# 3. Prompt for credentials or OAuth approval
+# 4. Store authentication token securely
+
+# Verify successful login
+mz whoami
+```
+
+**Expected Output:**
+```
+✅ You are logged in:
+👤 Name: John Doe
+📧 Email: john@example.com
+🆔 User ID: abc123...
+🎯 Role: Developer
+```
+
+### GUI Authentication
+
+1. **Launch GUI Application**
+   - Double-click the desktop icon
+
+2. **Access Login**
+   - Click "Login" button in the header, or
+   - Navigate to Settings → Authentication → "Login to MGZON"
+
+3. **Complete Authentication**
+   - Browser window opens automatically
+   - Complete login process in browser
+   - GUI updates to show logged-in status
+
+4. **Verification**
+   - User info appears in header
+   - Dashboard shows authenticated features
+
+## Project Creation Flow
+
+### CLI Project Creation
+
+```bash
+# Navigate to desired parent directory
+cd ~/projects
+
+# Create new project with template
+mz init my-awesome-app --template=nextjs
+
+# Navigate into project
+cd my-awesome-app
+
+# Install dependencies
+npm install
+
+# Start development server
+mz serve
+```
+
+**What happens during `mz init`:**
+- Creates project directory structure
+- Downloads selected template
+- Initializes package.json and configuration files
+- Sets up basic project scaffolding
+
+### GUI Project Creation
+
+1. **Access Project Creation**
+   - Click "New Project" on Dashboard, or
+   - Navigate to Projects → "Initialize New Project"
+
+2. **Configure Project**
+   - Enter project name
+   - Select template (Next.js, React, Vue, etc.)
+   - Choose project location (browse dialog)
+
+3. **Create Project**
+   - Click "Create Project" button
+   - GUI shows progress in terminal panel
+   - Project creation completes
+
+4. **Post-Creation**
+   - Option to open project in external editor
+   - Quick access to start development server
+
+## Development Workflow
+
+### Local Development (CLI)
+
+```bash
+# Start development server
+mz serve
+
+# Server starts on default port (usually 3000)
+# Open http://localhost:3000 in browser
+
+# Make code changes in your editor
+# Server auto-reloads on file changes
+
+# Stop server with Ctrl+C
+```
+
+### Local Development (GUI)
+
+1. **Start Server**
+   - Click "Start Server" on Dashboard
+   - Or navigate to Projects → select project → "Serve"
+
+2. **Monitor Output**
+   - Terminal panel shows server startup logs
+   - Displays local server URL
+
+3. **Development**
+   - Edit files in external editor
+   - GUI shows real-time server output
+   - Access app at displayed localhost URL
+
+## Deployment Flow
+
+### CLI Deployment
+
+```bash
+# Ensure you're in project directory
+cd my-awesome-app
+
+# Deploy to production
+mz deploy
+
+# CLI will:
+# 1. Build the application
+# 2. Upload to MGZON servers
+# 3. Configure domain and SSL
+# 4. Provide deployment URL
+```
+
+**Deployment Output:**
+```
+🚀 Starting deployment...
+📦 Building application...
+✅ Build completed
+📤 Uploading to MGZON...
+✅ Upload completed
+🌐 Configuring domain...
+✅ Deployment successful!
+🌐 App available at: https://my-awesome-app.mgzon.app
+```
+
+### GUI Deployment
+
+1. **Initiate Deployment**
+   - Click "Deploy" on Dashboard, or
+   - Navigate to Projects → select project → "Deploy"
+
+2. **Monitor Progress**
+   - Terminal panel shows build progress
+   - Real-time upload status
+   - Configuration steps
+
+3. **Completion**
+   - Success notification with app URL
+   - Quick access to view deployed app
+
+## App Management Flow
+
+### CLI App Management
+
+```bash
+# List all apps
+mz apps:list
+
+# Create new app
+mz apps:create my-new-app
+
+# View app details
+mz apps:info my-new-app
+
+# Delete app
+mz apps:delete my-new-app
+```
+
+### GUI App Management
+
+1. **Access Apps**
+   - Navigate to Apps section
+   - Click "Refresh" to load current apps
+
+2. **Create App**
+   - Click "Create App" button
+   - Enter app name and configuration
+   - GUI calls backend API
+
+3. **Manage Apps**
+   - View app list with status indicators
+   - Access app details and settings
+   - Delete apps with confirmation
+
+## File Storage Flow
+
+### CLI File Operations
+
+```bash
+# Upload a file
+mz storage:upload ./my-file.jpg
+
+# List storage files
+mz storage:list
+
+# Delete a file
+mz storage:delete file-id-123
+```
+
+### GUI File Operations
+
+1. **Upload Files**
+   - Navigate to Storage section
+   - Click "Upload File" button
+   - File browser dialog opens
+   - Select and upload file
+
+2. **Manage Storage**
+   - View file list with metadata
+   - Download or delete files
+   - Monitor storage usage
+
+## Error Handling and Recovery
+
+### Common Scenarios
+
+**Authentication Expired:**
+```bash
+mz login  # Re-authenticate
+```
+
+**Deployment Failed:**
+- Check terminal output for specific errors
+- Verify project configuration
+- Ensure all dependencies are installed
+- Try deployment again
+
+**Network Issues:**
+- Commands automatically retry on network failures
+- Check internet connection
+- Verify MGZON service status
+
+### GUI Error Handling
+
+- Error messages displayed in terminal panel
+- Clear error descriptions with suggested fixes
+- Automatic retry for transient failures
+- Fallback to manual CLI commands if needed
+
+## Advanced Workflows
+
+### Environment Management
+
+```bash
+# Switch between environments
+mz config:set environment=staging
+mz deploy --env=staging
+
+# View current configuration
+mz config:list
+```
+
+### Team Collaboration
+
+```bash
+# Share project with team
+mz apps:invite user@example.com
+
+# Manage team permissions
+mz apps:permissions:list
+mz apps:permissions:update user@example.com editor
+```
+
+### CI/CD Integration
+
+```bash
+# Generate deployment tokens
+mz keys:generate --name="CI/CD Pipeline"
+
+# Use in automated scripts
+curl -X POST https://api.mgzon.com/deploy \
+  -H "Authorization: Bearer $DEPLOY_TOKEN"
+```

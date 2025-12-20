@@ -248,6 +248,18 @@ program
     await appsCommand(options);
 });
 program
+    .command('db')
+    .description('Database management operations')
+    .option('-m, --migrate', 'Run database migrations')
+    .option('-s, --seed', 'Seed database with sample data')
+    .option('--stats', 'Show database statistics')
+    .option('--backup', 'Create database backup')
+    .option('--restore <file>', 'Restore database from backup')
+    .action(async (options) => {
+    const { dbCommand } = await Promise.resolve().then(() => __importStar(require('./commands/db')));
+    await dbCommand(options);
+});
+program
     .command('storage')
     .description('File storage operations')
     .option('-l, --list', 'List files')
@@ -372,4 +384,3 @@ catch (error) {
     console.error(chalk_1.default.red(error.message));
     process.exit(1);
 }
-//# sourceMappingURL=index.js.map

@@ -169,4 +169,3 @@ async function getApiUserInfo() {
     });
     return response.data.data.user;
 }
-//# sourceMappingURL=auth.js.map

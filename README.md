@@ -2,6 +2,10 @@
 ```markdown
 # MGZON CLI 🚀
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Mark-Lasfar/MGZon/978bf51a14ac24a66d614fd5d78f22971261a498/public/icons/mg.svg" alt="MGZON Logo" width="200">
+</p>
+
 
   __  __    ____   _____   ___    _   _      ____   _       ___ 
  |  \/  |  / ___| |__  /  / _ \  | \ | |    / ___| | |     |_ _|
@@ -18,6 +22,8 @@ The official Command Line Interface for MGZON App Development Platform.
 ![Node Version](https://img.shields.io/node/v/@mgzon/cli)
 
 ## 📦 Installation
+
+### Option 1: Install via npm (Recommended for developers)
 
 Install globally using npm:
 
@@ -37,6 +43,32 @@ Or using pnpm:
 pnpm add -g @mgzon/cli
 ```
 
+### Option 2: Standalone Executables (No Node.js required)
+
+Download the pre-built executables for your platform:
+
+#### Linux
+```bash
+# Download and make executable
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-linux -o mgzon
+chmod +x mgzon
+sudo mv mgzon /usr/local/bin/
+```
+
+#### macOS
+```bash
+# Download and make executable
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-macos -o mgzon
+chmod +x mgzon
+sudo mv mgzon /usr/local/bin/
+```
+
+#### Windows
+```bash
+# Download from releases page and add to PATH
+# https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-win.exe
+```
+
 Verify installation:
 
 ```bash
@@ -45,7 +77,56 @@ mz --version
 mgzon --version
 ```
 
+### Option 3: GUI Application
+
+For users who prefer a graphical interface, download the MGZON GUI app:
+
+- **Linux**: [Download AppImage](https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.AppImage)
+- **macOS**: [Download DMG](https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.dmg)  
+- **Windows**: [Download EXE](https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.exe)
+
+The GUI provides the same functionality as the CLI but with a user-friendly interface.
+
+#### GUI Features
+
+- **Dashboard**: Quick access to common actions and system status
+- **Project Management**: Create, open, and manage MGZON projects
+- **App Management**: List, create, and manage your applications
+- **File Storage**: Upload and manage files in MGZON storage
+- **Settings**: Configure authentication, CLI settings, and preferences
+- **Terminal Output**: Real-time command execution feedback
+
+The GUI automatically detects and uses the bundled CLI executable for all operations.
+
+#### Running the GUI
+
+**Linux (AppImage):**
+```bash
+chmod +x MGZON-GUI-1.0.0.AppImage
+./MGZON-GUI-1.0.0.AppImage
+```
+
+**macOS (DMG):**
+Double-click the downloaded DMG file and drag the app to Applications.
+
+**Windows (EXE):**
+Double-click the downloaded EXE file to install and run.
+
 ## 🚀 Quick Start
+
+### Try the Demo Script
+
+Run the included demo script to see common CLI usage:
+
+```bash
+# Make sure you're in the project directory
+cd mgzon-cli
+
+# Run the demo
+./demo.sh
+```
+
+### Manual Quick Start
 
 ```bash
 # Create a new MGZON app
@@ -207,6 +288,9 @@ npm install
 # Build project
 npm run build
 
+# Run demo script
+./demo.sh
+
 # Link for local development
 npm link
 
@@ -233,12 +317,17 @@ mgzon-cli/
 
 ## 📚 Documentation
 
-Complete documentation available at: [https://developers.mgzon.com/tools/cli-docs](https://developers.mgzon.com/tools/cli-docs)
+Complete documentation is available in the [docs/](docs/) directory:
 
-- [Getting Started Guide](https://developers.mgzon.com/tools/cli-docs/getting-started)
-- [API Reference](https://developers.mgzon.com/tools/cli-docs/api-reference)
-- [Examples & Tutorials](https://developers.mgzon.com/tools/cli-docs/examples)
-- [Plugin Development](https://developers.mgzon.com/tools/cli-docs/plugins)
+- **[Installation Guide](docs/installation.mdx)** - Detailed installation instructions
+- **[User Flow Guide](docs/user-flow.mdx)** - Step-by-step user workflows
+- **[GUI-Backend Interaction](docs/gui-backend-interaction.mdx)** - How the GUI communicates with services
+- **[End-to-End Flow](docs/end-to-end-flow.mdx)** - Complete user journey from installation to execution
+- **[Architecture Diagram](docs/architecture-diagram.md)** - High-level system overview
+
+For privacy and security reasons, implementation details are not exposed in this public repository. The documentation provides comprehensive guidance on usage and architecture without revealing sensitive code.
+
+See our [Privacy & Security Implementation Plan](PRIVACY_SECURITY_PLAN.md) for details on our approach to protecting intellectual property and user data.
 
 ## 🤝 Contributing
 

@@ -105,4 +105,3 @@ async function configCommand(options) {
         console.log(chalk_1.default.gray(`  Platform: ${process.platform}`));
     }
 }
-//# sourceMappingURL=config.js.map

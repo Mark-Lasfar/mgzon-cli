@@ -496,4 +496,3 @@ async function testAllEndpoints() {
     }
     return results;
 }
-//# sourceMappingURL=config.js.map

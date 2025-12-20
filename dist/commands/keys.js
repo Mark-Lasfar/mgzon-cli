@@ -182,4 +182,3 @@ async function keysCommand(options) {
         console.log(chalk_1.default.cyan('  3. Verify login: mz whoami\n'));
     }
 }
-//# sourceMappingURL=keys.js.map

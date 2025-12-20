@@ -118,4 +118,3 @@ async function logoutCommand() {
         }
     }
 }
-//# sourceMappingURL=logout.js.map

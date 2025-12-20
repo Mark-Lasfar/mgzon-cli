@@ -322,4 +322,3 @@ async function appsCommand(options) {
         console.log(chalk_1.default.cyan('   Current API URL: ' + (await (0, auth_1.buildApiUrl)('/test').catch(() => 'Unknown'))));
     }
 }
-//# sourceMappingURL=apps.js.map

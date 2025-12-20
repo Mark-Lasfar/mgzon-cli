@@ -200,4 +200,3 @@ async function whoamiCommand() {
         console.log(chalk_1.default.red('─'.repeat(50)));
     }
 }
-//# sourceMappingURL=whoami.js.map

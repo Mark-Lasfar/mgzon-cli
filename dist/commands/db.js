@@ -260,4 +260,3 @@ async function dbCommand(options) {
         console.log(chalk_1.default.gray('─'.repeat(50) + '\n'));
     }
 }
-//# sourceMappingURL=db.js.map

@@ -121,4 +121,3 @@ async function getBuildStats(buildPath) {
     await collectStats(buildPath);
     return { totalSize, fileCount };
 }
-//# sourceMappingURL=build.js.map

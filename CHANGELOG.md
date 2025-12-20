@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🎨 Colorful terminal output with chalk
 - 📝 Comprehensive error handling
 
-## [1.0.0] - 2024-01-01
+## [1.0.0] - 2024-12-20
 
 ### Added
 - Initial public release of MGZON CLI

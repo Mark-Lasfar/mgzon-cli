@@ -1,0 +1,248 @@
+---
+title: GUI-Backend Interaction
+description: How the MGZON GUI communicates with backend services
+---
+
+# GUI-Backend Interaction Guide
+
+This document explains how the MGZON GUI application interacts with backend services and the underlying CLI, without exposing implementation details.
+
+## High-Level Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MGZON GUI APPLICATION                        │
+│                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────┐  │
+│  │   GUI Frontend  │────│  Electron Main  │────│ CLI Process │  │
+│  │   (HTML/CSS/JS) │    │    Process      │    │   Runner    │  │
+│  └─────────────────┘    └─────────────────┘    └─────────────┘  │
+│          │                       │                       │      │
+│          │                       │                       │      │
+│          ▼                       ▼                       ▼      │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────┐  │
+│  │   IPC Channels  │    │ Process Spawner │    │  MGZON API │  │
+│  │   (Secure)      │    │                 │    │   Backend   │  │
+│  └─────────────────┘    └─────────────────┘    └─────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                                                                 │
+                                                                 ▼
+                                                    ┌─────────────┐
+                                                    │   MGZON     │
+                                                    │   Services  │
+                                                    │   (Cloud)   │
+                                                    └─────────────┘
+```
+
+### Component Descriptions
+
+**GUI Frontend**: User interface built with HTML, CSS, and JavaScript
+**Electron Main Process**: Node.js runtime handling system operations
+**CLI Process Runner**: Executes MGZON CLI commands
+**IPC Channels**: Secure inter-process communication
+**Process Spawner**: Manages child process lifecycle
+**MGZON API Backend**: RESTful API endpoints
+**MGZON Services**: Cloud infrastructure and databases
+
+### Data Flow
+
+```
+User Action → GUI Frontend → IPC → Main Process → CLI Execution → API Calls → MGZON Backend
+      ↑              ↑              ↑              ↑              ↑              ↑
+   UI Update    Event Handling  Message Routing  Process Mgmt   HTTP Requests  Data Processing
+```
+
+## Architecture Overview
+
+The MGZON GUI is built on Electron, providing a desktop application that serves as a user-friendly interface to the MGZON CLI and API services.
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   GUI Frontend  │────│  Electron Main  │────│ CLI/API Backend│
+│   (HTML/CSS/JS) │    │    Process      │    │   Services     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        └───────────────────────┼───────────────────────┘
+                                │
+                    IPC Communication Layer
+```
+
+## Communication Layers
+
+### 1. Frontend to Main Process (IPC)
+
+The GUI frontend communicates with the Electron main process through secure IPC (Inter-Process Communication) channels.
+
+**Key IPC Channels:**
+- `run-cli-command`: Execute CLI commands
+- `select-directory`: Open folder selection dialog
+- `select-file`: Open file selection dialog
+
+**Security Features:**
+- Context isolation prevents direct DOM access
+- Preload scripts define allowed IPC methods
+- No Node.js APIs exposed to renderer process
+
+### 2. Main Process to CLI
+
+The main process spawns CLI executables and manages their lifecycle.
+
+**CLI Detection Logic:**
+1. Check for CLI in same directory as GUI executable
+2. Fall back to system PATH (global npm installation)
+3. Support both bundled and system CLI versions
+
+**Process Management:**
+- Spawns CLI as child processes
+- Captures stdout, stderr, and exit codes
+- Handles process termination and cleanup
+
+### 3. CLI to MGZON API
+
+The CLI communicates with MGZON backend services via RESTful APIs.
+
+**API Communication:**
+- HTTPS-only communication
+- JWT token-based authentication
+- Automatic token refresh
+- Rate limiting and retry logic
+
+## Data Flow Examples
+
+### Authentication Flow
+
+```
+1. User clicks "Login" button
+2. GUI → IPC: 'run-cli-command' with ['login']
+3. Main Process → spawns: 'mz login'
+4. CLI → opens browser for OAuth flow
+5. User completes authentication in browser
+6. CLI → receives callback, stores tokens
+7. CLI → exits with success code
+8. Main Process → returns result to GUI
+9. GUI → updates UI to show logged-in state
+```
+
+### Project Creation Flow
+
+```
+1. User fills project creation form
+2. GUI validates input locally
+3. GUI → IPC: 'run-cli-command' with ['init', name, '--template', template]
+4. Main Process → spawns CLI with arguments
+5. CLI → creates project structure
+6. CLI → downloads template files
+7. CLI → initializes configuration
+8. CLI → outputs progress to stdout
+9. Main Process → streams output to GUI terminal
+10. CLI → completes, returns exit code
+11. Main Process → notifies GUI of completion
+12. GUI → updates project list and shows success message
+```
+
+### File Upload Flow
+
+```
+1. User clicks "Upload File"
+2. GUI → IPC: 'select-file'
+3. Main Process → opens file dialog
+4. User selects file
+5. Main Process → returns file path to GUI
+6. GUI → IPC: 'run-cli-command' with ['storage:upload', filePath]
+7. Main Process → spawns CLI with file path
+8. CLI → reads file from disk
+9. CLI → authenticates with API
+10. CLI → uploads file via multipart/form-data
+11. CLI → reports progress to stdout
+12. Main Process → streams progress to GUI
+13. CLI → completes upload, returns success
+14. GUI → refreshes file list
+```
+
+## Error Handling
+
+### Frontend Error Handling
+
+- **IPC Errors**: Display user-friendly messages
+- **Validation Errors**: Inline form validation
+- **Network Errors**: Retry logic with user notification
+
+### Process Error Handling
+
+- **CLI Not Found**: Fallback detection logic
+- **Command Failures**: Parse exit codes and stderr
+- **Timeout Handling**: Kill long-running processes
+
+### API Error Handling
+
+- **Authentication Errors**: Trigger re-login flow
+- **Rate Limiting**: Exponential backoff retry
+- **Server Errors**: User-friendly error messages
+
+## Security Considerations
+
+### IPC Security
+- Restricted IPC channels in preload script
+- No arbitrary code execution from renderer
+- Input validation on all IPC messages
+
+### Process Security
+- CLI arguments properly escaped
+- No shell injection vulnerabilities
+- Process isolation from main application
+
+### Data Security
+- No sensitive data stored in renderer process
+- Secure token storage (OS keychain/credential manager)
+- HTTPS-only API communication
+
+## Performance Optimizations
+
+### CLI Process Management
+- Process pooling for frequently used commands
+- Streaming output to prevent memory issues
+- Background process handling for long operations
+
+### UI Responsiveness
+- Asynchronous IPC calls
+- Progress indicators for long operations
+- Caching of frequently accessed data
+
+### Memory Management
+- Proper cleanup of child processes
+- Efficient streaming of large outputs
+- Garbage collection of completed operations
+
+## Cross-Platform Compatibility
+
+### File System Operations
+- Platform-specific path handling
+- Native file dialogs via Electron APIs
+- Proper permission handling
+
+### CLI Executable Detection
+- Platform-specific executable naming
+- PATH resolution across different shells
+- Bundle detection for portable installations
+
+### UI Adaptations
+- Platform-specific menu integrations
+- Native window behaviors
+- Keyboard shortcut mappings
+
+## Monitoring and Debugging
+
+### Logging
+- Structured logging of IPC calls
+- CLI command execution tracking
+- Error reporting with context
+
+### Debugging Tools
+- Developer console access in GUI
+- CLI command inspection
+- Network request monitoring
+
+### Performance Monitoring
+- IPC call timing
+- Process execution metrics
+- Memory usage tracking

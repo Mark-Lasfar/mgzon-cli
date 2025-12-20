@@ -9,6 +9,8 @@ import { createWriteStream, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import { getAuthHeaders, buildApiUrl } from '../middleware/auth';
 import { getApiUrl } from '../utils/config';
+import FormData from 'form-data';
+
 
 interface DeployResponse {
   deploymentId: string;
@@ -293,7 +295,7 @@ export async function deployCommand(options: any) {
     const formData = new FormData();
     
     // Add file
-    const fileBlob = new Blob([zipBuffer], { type: 'application/zip' });
+    const fileBlob = new Blob([new Uint8Array(zipBuffer)], { type: 'application/zip' });
     formData.append('file', fileBlob, 'deployment.zip');
     
     // Add metadata

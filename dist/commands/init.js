@@ -431,4 +431,3 @@ async function createProjectConfig(projectDir, apiUrl) {
     await fs_extra_1.default.writeJson(path_1.default.join(projectDir, '.mgzon.json'), config, { spaces: 2 });
     console.log(chalk_1.default.gray(`   Created: .mgzon.json`));
 }
-//# sourceMappingURL=init.js.map

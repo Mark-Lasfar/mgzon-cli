@@ -1,0 +1,159 @@
+---
+title: End-to-End User Flow
+description: Complete guide to MGZON CLI and GUI usage from installation to backend execution
+---
+
+# End-to-End User Flow
+
+This document outlines the complete user journey for MGZON CLI and GUI applications, from initial installation through backend execution.
+
+## Installation Phase
+
+### CLI Installation Options
+
+Users can install MGZON CLI through multiple channels:
+
+1. **NPM Package Manager**
+   - Command: `npm install -g @mgzon/cli`
+   - Downloads and installs via Node.js package registry
+   - Requires Node.js 16+ and npm 7+
+
+2. **Standalone Executables**
+   - Direct download from GitHub releases
+   - No Node.js dependency required
+   - Platform-specific binaries for Linux, macOS, Windows
+
+3. **GUI Application**
+   - Desktop app download from releases
+   - Includes bundled CLI functionality
+   - Cross-platform Electron-based application
+
+### Post-Installation Setup
+
+After installation, users typically:
+1. Verify installation with `mz --version`
+2. Authenticate with `mz login` (or GUI login button)
+3. Configure project settings if needed
+
+## User Interaction Phase
+
+### CLI User Flow
+
+```bash
+# 1. Authentication
+mz login                    # Interactive login process
+mz whoami                   # Verify authentication status
+
+# 2. Project Creation
+mz init my-project --template=nextjs
+cd my-project
+npm install
+
+# 3. Development
+mz serve                    # Start local development server
+# Edit files in IDE
+
+# 4. Deployment
+mz deploy                   # Deploy to MGZON cloud
+mz apps:list               # View deployed applications
+```
+
+### GUI User Flow
+
+1. **Launch Application**
+   - Double-click desktop icon or run executable
+   - GUI initializes and checks for CLI availability
+
+2. **Authentication**
+   - Click "Login" button in header or Settings
+   - Browser opens for OAuth/authentication flow
+   - GUI updates user status upon successful login
+
+3. **Project Management**
+   - Use Dashboard for quick actions
+   - Navigate to Projects section
+   - Click "New Project" or "Open Existing"
+   - Fill project creation form (name, template, location)
+   - GUI calls CLI commands in background
+
+4. **Development Workflow**
+   - Click "Start Server" for local development
+   - Terminal panel shows real-time output
+   - Edit files externally (GUI doesn't include editor)
+
+5. **Deployment & Management**
+   - Use "Deploy" button for production deployment
+   - Monitor progress in terminal output
+   - Manage apps through Apps section
+
+## Backend Execution Phase
+
+### CLI Backend Flow
+
+When a CLI command executes:
+
+1. **Command Parsing**
+   - Commander.js parses command-line arguments
+   - Routes to appropriate command handler
+
+2. **Authentication Check**
+   - Validates stored API tokens
+   - Refreshes tokens if expired
+
+3. **API Communication**
+   - Makes HTTP requests to MGZON API endpoints
+   - Uses Axios for HTTP client functionality
+   - Handles rate limiting and error responses
+
+4. **Local Operations**
+   - File system operations (read/write configs)
+   - Process spawning for build/deploy operations
+   - Template scaffolding for new projects
+
+5. **Output Formatting**
+   - Formats responses using Chalk for colors
+   - Displays progress with Ora spinners
+   - Handles both success and error states
+
+### GUI Backend Flow
+
+The GUI acts as a frontend wrapper around CLI commands:
+
+1. **IPC Communication**
+   - Electron's IPC channels handle UI ↔ main process communication
+   - Main process spawns CLI executables
+
+2. **CLI Execution**
+   - GUI detects bundled or system CLI
+   - Spawns CLI processes with appropriate arguments
+   - Captures stdout/stderr for display
+
+3. **File System Access**
+   - Uses Electron APIs for file/folder selection
+   - Passes file paths to CLI commands
+
+4. **Real-time Feedback**
+   - Terminal output panel shows live command execution
+   - Progress indicators for long-running operations
+
+## Data Flow Architecture
+
+```
+User Action → GUI/CLI → Command Handler → API Client → MGZON Backend
+      ↓              ↓              ↓              ↓              ↓
+   UI Update    IPC/Event     Business Logic    HTTP Request   Database/API
+```
+
+## Error Handling & Recovery
+
+- **Network Issues**: Automatic retry with exponential backoff
+- **Authentication Errors**: Prompt for re-login
+- **File System Errors**: Clear error messages with suggested fixes
+- **Build Failures**: Detailed error logs with troubleshooting tips
+
+## Security Considerations
+
+- API tokens stored securely (keychain on macOS, credential manager on Windows)
+- HTTPS-only communication with MGZON APIs
+- Input validation on all user-provided data
+- No sensitive data logged in terminal output

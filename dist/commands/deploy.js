@@ -47,6 +47,7 @@ const fs_1 = require("fs");
 const os_1 = require("os");
 const auth_1 = require("../middleware/auth");
 const config_1 = require("../utils/config");
+const form_data_1 = __importDefault(require("form-data"));
 async function deployCommand(options) {
     const spinner = (0, ora_1.default)('Preparing deployment...').start();
     try {
@@ -257,8 +258,8 @@ async function deployCommand(options) {
         spinner.start('Uploading to MGZON...');
         spinner.text = 'Uploading deployment package...';
         const headers = await (0, auth_1.getAuthHeaders)();
-        const formData = new FormData();
-        const fileBlob = new Blob([zipBuffer], { type: 'application/zip' });
+        const formData = new form_data_1.default();
+        const fileBlob = new Blob([new Uint8Array(zipBuffer)], { type: 'application/zip' });
         formData.append('file', fileBlob, 'deployment.zip');
         formData.append('appId', appId);
         formData.append('appName', appName);
@@ -481,4 +482,3 @@ async function createDeploymentPackage(projectDir, buildDir) {
         archive.finalize();
     });
 }
-//# sourceMappingURL=deploy.js.map

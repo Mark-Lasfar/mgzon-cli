@@ -586,4 +586,3 @@ async function webhookCommand(options) {
         }
     }
 }
-//# sourceMappingURL=webhook.js.map

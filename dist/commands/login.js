@@ -108,4 +108,3 @@ async function loginCommand(options) {
         process.exit(1);
     }
 }
-//# sourceMappingURL=login.js.map

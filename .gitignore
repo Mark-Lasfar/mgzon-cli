@@ -1,4 +1,6 @@
 node_modules/
+dist/
+bin/
 
 .DS_Store
 .env
@@ -6,3 +8,17 @@ node_modules/
 
 .env.local
 .env.*.local
+
+# Build artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db

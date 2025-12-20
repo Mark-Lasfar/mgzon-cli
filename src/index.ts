@@ -244,6 +244,19 @@ program
     await appsCommand(options);
   });
 
+program
+  .command('db')
+  .description('Database management operations')
+  .option('-m, --migrate', 'Run database migrations')
+  .option('-s, --seed', 'Seed database with sample data')
+  .option('--stats', 'Show database statistics')
+  .option('--backup', 'Create database backup')
+  .option('--restore <file>', 'Restore database from backup')
+  .action(async (options) => {
+    const { dbCommand } = await import('./commands/db');
+    await dbCommand(options);
+  });
+
 // ===== أوامر التخزين =====
 program
   .command('storage')

@@ -175,4 +175,3 @@ async function runLogin() {
     const { loginCommand } = await Promise.resolve().then(() => __importStar(require('./login')));
     await loginCommand({});
 }
-//# sourceMappingURL=setup.js.map

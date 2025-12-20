@@ -313,4 +313,3 @@ async function debugMemory(spinner) {
     console.log(chalk_1.default.gray('  mz config --reset'));
     console.log(chalk_1.default.gray('  mz logout\n'));
 }
-//# sourceMappingURL=debug.js.map

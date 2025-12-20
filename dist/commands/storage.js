@@ -326,4 +326,3 @@ async function storageCommand(options) {
         }
     }
 }
-//# sourceMappingURL=storage.js.map

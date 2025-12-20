@@ -60,4 +60,3 @@ async function serveCommand(options) {
         console.error(chalk_1.default.gray('Stack trace:'), error.stack);
     }
 }
-//# sourceMappingURL=serve.js.map
