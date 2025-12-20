@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import axios, { AxiosError } from 'axios';
 import inquirer from 'inquirer';
+import { URL } from 'url';
 import { buildApiUrl, getAuthHeaders } from '../middleware/auth';
 
 interface Webhook {

@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "archiver": "^6.0.0",
-    "axios": "^0.27.2",
+    "axios": "^1.13.2",
     "boxen": "^7.0.0",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
@@ -76,6 +76,7 @@
     "ora": "^7.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/archiver": "^7.0.0",
     "@types/figlet": "^1.5.6",
     "@types/form-data": "^2.2.1",
@@ -83,11 +84,10 @@
     "@types/inquirer": "^9.0.3",
     "@types/mime-types": "^3.0.1",
     "@types/node": "^20.5.0",
-    "@eslint/js": "^9.39.2",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",
     "concurrently": "^8.2.0",
-    "electron": "^25.0.0",
+    "electron": "^39.2.7",
     "electron-builder": "^24.6.0",
     "eslint": "^9.39.2",
     "sharp": "^0.34.5",

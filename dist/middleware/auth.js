@@ -43,7 +43,21 @@ exports.getApiUserInfo = getApiUserInfo;
 const chalk_1 = __importDefault(require("chalk"));
 const config_1 = require("../utils/config");
 const axios_1 = __importDefault(require("axios"));
+let authCache = {
+    data: null,
+    timestamp: 0,
+    ttl: 5 * 60 * 1000
+};
+function isAuthCacheValid() {
+    return authCache.data !== null && (Date.now() - authCache.timestamp) < authCache.ttl;
+}
 async function requireAuth(silent = false) {
+    if (isAuthCacheValid()) {
+        if (!silent) {
+            console.log(chalk_1.default.gray(`   Debug: Using cached authentication (${Math.round((Date.now() - authCache.timestamp) / 1000)}s ago)`));
+        }
+        return authCache.data;
+    }
     try {
         const apiKey = await (0, config_1.getApiKey)();
         const apiUrl = await (0, config_1.getApiUrl)();
@@ -71,6 +85,31 @@ async function requireAuth(silent = false) {
             }
             return null;
         }
+        const config = await (0, config_1.getConfig)();
+        if (config.sessionToken && config.expiresAt) {
+            const expiresAt = new Date(config.expiresAt);
+            if (expiresAt > new Date()) {
+                const authInfo = {
+                    apiKey,
+                    apiUrl,
+                    user: {
+                        id: config.userId,
+                        name: config.name,
+                        email: config.email,
+                        isDeveloper: config.isDeveloper,
+                        isSeller: config.isSeller,
+                        isAdmin: config.isAdmin
+                    },
+                    sessionToken: config.sessionToken
+                };
+                authCache.data = authInfo;
+                authCache.timestamp = Date.now();
+                if (!silent) {
+                    console.log(chalk_1.default.gray(`   Debug: Using valid session token (expires: ${expiresAt.toISOString()})`));
+                }
+                return authInfo;
+            }
+        }
         try {
             if (!silent) {
                 console.log(chalk_1.default.gray(`   Debug: Verifying API key via CLI login endpoint`));
@@ -84,12 +123,33 @@ async function requireAuth(silent = false) {
                 timeout: 5000
             });
             if (response.data.success) {
-                return {
+                let expiresAt = response.data.data.session?.expiresAt;
+                if (!expiresAt && response.data.data.session?.expiresIn) {
+                    expiresAt = new Date(Date.now() + (response.data.data.session.expiresIn * 1000)).toISOString();
+                }
+                const authInfo = {
                     apiKey,
                     apiUrl,
                     user: response.data.data.user,
-                    rateLimit: response.data.data.apiKey?.rateLimit
+                    rateLimit: response.data.data.apiKey?.rateLimit,
+                    sessionToken: response.data.data.session?.token,
+                    expiresAt
                 };
+                authCache.data = authInfo;
+                authCache.timestamp = Date.now();
+                if (authInfo.sessionToken && authInfo.expiresAt) {
+                    await (0, config_1.saveConfig)({
+                        sessionToken: authInfo.sessionToken,
+                        expiresAt: authInfo.expiresAt,
+                        userId: authInfo.user?.id,
+                        name: authInfo.user?.name,
+                        email: authInfo.user?.email,
+                        isDeveloper: authInfo.user?.isDeveloper,
+                        isSeller: authInfo.user?.isSeller,
+                        isAdmin: authInfo.user?.isAdmin
+                    });
+                }
+                return authInfo;
             }
             else {
                 throw new Error(response.data.error || 'API key verification failed');
@@ -100,9 +160,18 @@ async function requireAuth(silent = false) {
                 console.log(chalk_1.default.red('\n❌ Authentication failed!'));
                 if (error.response?.status === 401) {
                     console.log(chalk_1.default.cyan(`   Invalid API key. Please login again.`));
+                    console.log(chalk_1.default.gray(`   API Key: ${apiKey.substring(0, 12)}...`));
+                    console.log(chalk_1.default.gray(`   API URL: ${apiUrl}`));
+                    if (error.response?.data) {
+                        console.log(chalk_1.default.gray(`   Error details: ${JSON.stringify(error.response.data, null, 2)}`));
+                    }
+                }
+                else if (error.response?.status === 429) {
+                    console.log(chalk_1.default.cyan(`   Rate limit exceeded. Please try again later.`));
                 }
                 else {
                     console.log(chalk_1.default.cyan(`   Error: ${error.message || 'Unknown error'}`));
+                    console.log(chalk_1.default.gray(`   Status: ${error.response?.status || 'No response'}`));
                 }
                 console.log(chalk_1.default.cyan('\n   Run: mz login to re-authenticate'));
                 const { default: inquirer } = await Promise.resolve().then(() => __importStar(require('inquirer')));
@@ -118,10 +187,10 @@ async function requireAuth(silent = false) {
                     const { loginCommand } = await Promise.resolve().then(() => __importStar(require('../commands/login')));
                     await loginCommand({});
                     const newApiKey = await (0, config_1.getApiKey)();
-                    const config = await (0, config_1.getConfig)();
+                    const newConfig = await (0, config_1.getConfig)();
                     return {
                         apiKey: newApiKey,
-                        apiUrl: config.apiUrl || apiUrl
+                        apiUrl: newConfig.apiUrl || apiUrl
                     };
                 }
             }
@@ -142,8 +211,9 @@ async function getAuthHeaders() {
     if (!auth) {
         throw new Error('Not authenticated');
     }
+    const token = auth.sessionToken || auth.apiKey;
     return {
-        'Authorization': `Bearer ${auth.apiKey}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'User-Agent': `mgzon-cli/1.0.0 (${process.platform}; ${process.arch})`,
         'X-CLI-Version': '1.0.0'

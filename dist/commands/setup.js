@@ -38,6 +38,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupCommand = setupCommand;
 const chalk_1 = __importDefault(require("chalk"));
+const url_1 = require("url");
 const config_1 = require("../utils/config");
 async function setupCommand() {
     console.log(chalk_1.default.blue(`
@@ -120,7 +121,7 @@ async function configureApiUrl() {
                 if (!input)
                     return 'URL is required';
                 try {
-                    new URL(input);
+                    new url_1.URL(input);
                     return true;
                 }
                 catch {
@@ -137,7 +138,7 @@ async function configureApiUrl() {
                 if (!input)
                     return 'URL is required';
                 try {
-                    new URL(input);
+                    new url_1.URL(input);
                     return true;
                 }
                 catch {

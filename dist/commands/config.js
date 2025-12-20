@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.configCommand = configCommand;
 const chalk_1 = __importDefault(require("chalk"));
 const ora_1 = __importDefault(require("ora"));
+const url_1 = require("url");
 const config_1 = require("../utils/config");
 async function configCommand(options) {
     const spinner = (0, ora_1.default)('Processing...').start();
@@ -36,7 +37,7 @@ async function configCommand(options) {
             }
             if (key === 'apiUrl') {
                 try {
-                    const url = new URL(value);
+                    new url_1.URL(value);
                     if (!value.includes('/api/v1')) {
                         console.log(chalk_1.default.yellow('⚠️  Warning: apiUrl should end with /api/v1'));
                         console.log(chalk_1.default.cyan('   Example: http://localhost:3000/api/v1'));

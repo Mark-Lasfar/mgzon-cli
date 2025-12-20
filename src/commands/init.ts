@@ -470,7 +470,7 @@ async function createProjectConfig(projectDir: string, apiUrl: string) {
     projectType: 'mgzon-app',
     createdAt: new Date().toISOString(),
     version: '1.0.0',
-    cliVersion: require('../../package.json').version
+    cliVersion: (await fs.readJson(path.join(__dirname, '../../package.json'))).version
   };
 
   await fs.writeJson(

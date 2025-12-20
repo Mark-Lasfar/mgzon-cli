@@ -426,7 +426,7 @@ async function createProjectConfig(projectDir, apiUrl) {
         projectType: 'mgzon-app',
         createdAt: new Date().toISOString(),
         version: '1.0.0',
-        cliVersion: require('../../package.json').version
+        cliVersion: (await fs_extra_1.default.readJson(path_1.default.join(__dirname, '../../package.json'))).version
     };
     await fs_extra_1.default.writeJson(path_1.default.join(projectDir, '.mgzon.json'), config, { spaces: 2 });
     console.log(chalk_1.default.gray(`   Created: .mgzon.json`));

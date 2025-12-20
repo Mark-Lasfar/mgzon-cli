@@ -148,7 +148,7 @@ export async function whoamiCommand() {
           console.log(chalk.red(`   Error: ${testResult.error}`));
         }
       }
-    } catch (testError) {
+    } catch {
       console.log(chalk.red('   ❌ Connection test failed'));
     }
     

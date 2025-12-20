@@ -317,7 +317,7 @@ program
 
       await open(url);
       console.log(chalk.green(`\n✅ Opening documentation at ${url}\n`));
-    } catch (error: any) {
+    } catch {
       console.error(chalk.red('\n❌ Failed to open documentation'));
       console.error(chalk.cyan(`   Manual URL: https://docs.mgzon.com/cli\n`));
     }

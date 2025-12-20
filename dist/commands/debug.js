@@ -9,6 +9,7 @@ const ora_1 = __importDefault(require("ora"));
 const config_1 = require("../utils/config");
 const axios_1 = __importDefault(require("axios"));
 const os_1 = require("os");
+const fs_extra_1 = __importDefault(require("fs-extra"));
 async function debugCommand(options) {
     const spinner = (0, ora_1.default)('Starting debug...').start();
     try {
@@ -46,7 +47,8 @@ async function debugAll(spinner) {
     console.log(chalk_1.default.cyan(`NPM:         ${process.env.npm_config_user_agent || 'N/A'}`));
     console.log(chalk_1.default.bold('\n🛠️  CLI Information'));
     console.log(chalk_1.default.gray('─'.repeat(40)));
-    console.log(chalk_1.default.cyan(`Version:     ${require('../../../package.json').version}`));
+    const packageJson = await fs_extra_1.default.readJson(process.cwd() + '/package.json');
+    console.log(chalk_1.default.cyan(`Version:     ${packageJson.version}`));
     console.log(chalk_1.default.cyan(`Config path: ${process.env.HOME}/.mgzon/config.json`));
     console.log(chalk_1.default.bold('\n🔐 Authentication'));
     console.log(chalk_1.default.gray('─'.repeat(40)));
@@ -105,7 +107,7 @@ async function debugAll(spinner) {
                 console.log(chalk_1.default.yellow(`  ${test.name.padEnd(15)}: ⚠️  Responded (${response.status})`));
             }
         }
-        catch (error) {
+        catch {
             console.log(chalk_1.default.red(`  ${test.name.padEnd(15)}: ❌ Unreachable`));
         }
     }
@@ -207,7 +209,7 @@ async function debugNetwork(spinner) {
             const end = Date.now();
             console.log(chalk_1.default.green(`  ✅ ${url} - ${end - start}ms`));
         }
-        catch (error) {
+        catch {
             console.log(chalk_1.default.red(`  ❌ ${url} - Unreachable`));
         }
     }

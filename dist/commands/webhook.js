@@ -41,6 +41,7 @@ const chalk_1 = __importDefault(require("chalk"));
 const ora_1 = __importDefault(require("ora"));
 const axios_1 = __importDefault(require("axios"));
 const inquirer_1 = __importDefault(require("inquirer"));
+const url_1 = require("url");
 const auth_1 = require("../middleware/auth");
 async function webhookCommand(options) {
     const spinner = (0, ora_1.default)('Processing...').start();
@@ -157,7 +158,7 @@ async function webhookCommand(options) {
                         message: 'Webhook URL:',
                         validate: (input) => {
                             try {
-                                new URL(input);
+                                new url_1.URL(input);
                                 return true;
                             }
                             catch {
@@ -350,7 +351,7 @@ async function webhookCommand(options) {
                     message: 'Webhook URL:',
                     validate: (input) => {
                         try {
-                            new URL(input);
+                            new url_1.URL(input);
                             return true;
                         }
                         catch {

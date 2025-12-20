@@ -108,7 +108,6 @@ async function storageCommand(options) {
             if (fileSize > maxSize) {
                 throw new Error(`File size exceeds ${Math.round(maxSize / 1024 / 1024)}MB limit`);
             }
-            const fileExt = path_1.default.extname(fileName).toLowerCase();
             const mimeType = mime_types_1.default.lookup(filePath) || 'application/octet-stream';
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/zip'];
             if (!allowedTypes.includes(mimeType)) {
@@ -321,7 +320,7 @@ async function storageCommand(options) {
             const apiUrl = await (0, auth_1.buildApiUrl)('/storage');
             console.log(chalk_1.default.cyan(`   API URL: ${apiUrl}`));
         }
-        catch (e) {
+        catch {
             console.log(chalk_1.default.cyan('   Could not get API URL'));
         }
     }

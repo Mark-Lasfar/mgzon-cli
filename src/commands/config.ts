@@ -1,6 +1,7 @@
 // /workspaces/mgzon-cli/src/commands/config.ts
 import chalk from 'chalk';
 import ora from 'ora';
+import { URL } from 'url';
 import { getConfig, saveConfig } from '../utils/config';
 
 export async function configCommand(options: any) {
@@ -43,7 +44,7 @@ export async function configCommand(options: any) {
       // ✅ إضافة validation للـ apiUrl
       if (key === 'apiUrl') {
         try {
-          const url = new URL(value);
+          new URL(value);
           if (!value.includes('/api/v1')) {
             console.log(chalk.yellow('⚠️  Warning: apiUrl should end with /api/v1'));
             console.log(chalk.cyan('   Example: http://localhost:3000/api/v1'));

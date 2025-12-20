@@ -7,6 +7,7 @@ import path from 'path';
 import archiver from 'archiver';
 import { createWriteStream, existsSync } from 'fs';
 import { tmpdir } from 'os';
+import { Blob } from 'buffer';
 import { getAuthHeaders, buildApiUrl } from '../middleware/auth';
 import { getApiUrl } from '../utils/config';
 import FormData from 'form-data';
@@ -137,7 +138,7 @@ export async function deployCommand(options: any) {
         appId = appId || mgzonConfig.appId;
         appName = mgzonConfig.name || appName;
         appSlug = mgzonConfig.slug || appSlug;
-      } catch (error) {
+      } catch {
         console.log(chalk.yellow('⚠️  Could not read .mgzon.json config'));
       }
     }
@@ -167,7 +168,7 @@ export async function deployCommand(options: any) {
             spinner.text = 'No existing app found';
           }
         }
-      } catch (error) {
+      } catch {
         spinner.text = 'Could not fetch apps list';
       }
       
@@ -347,8 +348,7 @@ export async function deployCommand(options: any) {
     // Send deployment request
     spinner.text = 'Deploying...';
     
-    try {
-      const response = await axios.post<{ 
+    const response = await axios.post<{ 
         success: boolean; 
         data: DeployResponse; 
         message?: string;
@@ -417,10 +417,6 @@ export async function deployCommand(options: any) {
       }
       
       console.log(chalk.cyan('\n' + '═'.repeat(60) + '\n'));
-
-    } catch (uploadError: any) {
-      throw uploadError;
-    }
 
   } catch (error: any) {
     spinner.fail(chalk.red('❌ Deployment failed'));

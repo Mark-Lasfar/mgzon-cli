@@ -163,7 +163,7 @@ async function whoamiCommand() {
                 }
             }
         }
-        catch (testError) {
+        catch {
             console.log(chalk_1.default.red('   ❌ Connection test failed'));
         }
         console.log(chalk_1.default.gray('─'.repeat(50)));

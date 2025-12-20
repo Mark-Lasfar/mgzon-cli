@@ -115,7 +115,7 @@ async function getBuildStats(buildPath) {
                 }
             }
         }
-        catch (error) {
+        catch {
         }
     };
     await collectStats(buildPath);

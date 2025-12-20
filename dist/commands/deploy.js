@@ -45,6 +45,7 @@ const path_1 = __importDefault(require("path"));
 const archiver_1 = __importDefault(require("archiver"));
 const fs_1 = require("fs");
 const os_1 = require("os");
+const buffer_1 = require("buffer");
 const auth_1 = require("../middleware/auth");
 const config_1 = require("../utils/config");
 const form_data_1 = __importDefault(require("form-data"));
@@ -126,7 +127,7 @@ async function deployCommand(options) {
                 appName = mgzonConfig.name || appName;
                 appSlug = mgzonConfig.slug || appSlug;
             }
-            catch (error) {
+            catch {
                 console.log(chalk_1.default.yellow('⚠️  Could not read .mgzon.json config'));
             }
         }
@@ -151,7 +152,7 @@ async function deployCommand(options) {
                     }
                 }
             }
-            catch (error) {
+            catch {
                 spinner.text = 'Could not fetch apps list';
             }
             if (!appId && !options.autoApprove) {
@@ -259,7 +260,7 @@ async function deployCommand(options) {
         spinner.text = 'Uploading deployment package...';
         const headers = await (0, auth_1.getAuthHeaders)();
         const formData = new form_data_1.default();
-        const fileBlob = new Blob([new Uint8Array(zipBuffer)], { type: 'application/zip' });
+        const fileBlob = new buffer_1.Blob([new Uint8Array(zipBuffer)], { type: 'application/zip' });
         formData.append('file', fileBlob, 'deployment.zip');
         formData.append('appId', appId);
         formData.append('appName', appName);
@@ -297,55 +298,50 @@ async function deployCommand(options) {
         const deployUrl = await (0, auth_1.buildApiUrl)('/deploy');
         console.log(chalk_1.default.gray(`   Debug: Deploy URL: ${deployUrl}`));
         spinner.text = 'Deploying...';
-        try {
-            const response = await axios_1.default.post(deployUrl, formData, {
-                headers: {
-                    'Authorization': headers.Authorization,
-                    'Content-Type': 'multipart/form-data'
-                },
-                timeout: 300000
+        const response = await axios_1.default.post(deployUrl, formData, {
+            headers: {
+                'Authorization': headers.Authorization,
+                'Content-Type': 'multipart/form-data'
+            },
+            timeout: 300000
+        });
+        if (!response.data.success) {
+            throw new Error(response.data.error || response.data.message || 'Deployment failed');
+        }
+        const deployData = response.data.data;
+        spinner.succeed(chalk_1.default.green('✅ Deployment successful!'));
+        console.log(chalk_1.default.cyan('\n' + '═'.repeat(60)));
+        console.log(chalk_1.default.bold('🚀 Deployment Complete'));
+        console.log(chalk_1.default.cyan('═'.repeat(60)));
+        console.log(chalk_1.default.green(`Deployment ID: ${deployData.deploymentId}`));
+        console.log(chalk_1.default.green(`App: ${deployData.appName}`));
+        console.log(chalk_1.default.green(`Version: ${deployData.version}`));
+        console.log(chalk_1.default.green(`Environment: ${deployData.environment}`));
+        console.log(chalk_1.default.green(`Status: ${deployData.status}`));
+        if (deployData.url) {
+            console.log(chalk_1.default.green(`URL: ${deployData.url}`));
+        }
+        console.log(chalk_1.default.cyan('═'.repeat(60)));
+        if (deployData.logs && deployData.logs.length > 0) {
+            console.log(chalk_1.default.cyan('\n📋 Deployment Logs:'));
+            deployData.logs.forEach((log, index) => {
+                console.log(chalk_1.default.gray(`  ${index + 1}. ${log}`));
             });
-            if (!response.data.success) {
-                throw new Error(response.data.error || response.data.message || 'Deployment failed');
-            }
-            const deployData = response.data.data;
-            spinner.succeed(chalk_1.default.green('✅ Deployment successful!'));
-            console.log(chalk_1.default.cyan('\n' + '═'.repeat(60)));
-            console.log(chalk_1.default.bold('🚀 Deployment Complete'));
-            console.log(chalk_1.default.cyan('═'.repeat(60)));
-            console.log(chalk_1.default.green(`Deployment ID: ${deployData.deploymentId}`));
-            console.log(chalk_1.default.green(`App: ${deployData.appName}`));
-            console.log(chalk_1.default.green(`Version: ${deployData.version}`));
-            console.log(chalk_1.default.green(`Environment: ${deployData.environment}`));
-            console.log(chalk_1.default.green(`Status: ${deployData.status}`));
-            if (deployData.url) {
-                console.log(chalk_1.default.green(`URL: ${deployData.url}`));
-            }
-            console.log(chalk_1.default.cyan('═'.repeat(60)));
-            if (deployData.logs && deployData.logs.length > 0) {
-                console.log(chalk_1.default.cyan('\n📋 Deployment Logs:'));
-                deployData.logs.forEach((log, index) => {
-                    console.log(chalk_1.default.gray(`  ${index + 1}. ${log}`));
-                });
-            }
-            if (deployData.nextSteps && deployData.nextSteps.length > 0) {
-                console.log(chalk_1.default.cyan('\n👉 Next Steps:'));
-                deployData.nextSteps.forEach((step, index) => {
-                    console.log(chalk_1.default.yellow(`  ${index + 1}. ${step}`));
-                });
-            }
-            console.log(chalk_1.default.cyan('\n' + '═'.repeat(60)));
-            console.log(chalk_1.default.cyan('🔧 Useful Commands:'));
-            console.log(chalk_1.default.yellow(`  mz apps --info ${deployData.appId}`));
-            console.log(chalk_1.default.yellow(`  mz apps --logs ${deployData.appId}`));
-            if (deployData.downloadUrl) {
-                console.log(chalk_1.default.yellow(`  curl -O ${deployData.downloadUrl}`));
-            }
-            console.log(chalk_1.default.cyan('\n' + '═'.repeat(60) + '\n'));
         }
-        catch (uploadError) {
-            throw uploadError;
+        if (deployData.nextSteps && deployData.nextSteps.length > 0) {
+            console.log(chalk_1.default.cyan('\n👉 Next Steps:'));
+            deployData.nextSteps.forEach((step, index) => {
+                console.log(chalk_1.default.yellow(`  ${index + 1}. ${step}`));
+            });
         }
+        console.log(chalk_1.default.cyan('\n' + '═'.repeat(60)));
+        console.log(chalk_1.default.cyan('🔧 Useful Commands:'));
+        console.log(chalk_1.default.yellow(`  mz apps --info ${deployData.appId}`));
+        console.log(chalk_1.default.yellow(`  mz apps --logs ${deployData.appId}`));
+        if (deployData.downloadUrl) {
+            console.log(chalk_1.default.yellow(`  curl -O ${deployData.downloadUrl}`));
+        }
+        console.log(chalk_1.default.cyan('\n' + '═'.repeat(60) + '\n'));
     }
     catch (error) {
         spinner.fail(chalk_1.default.red('❌ Deployment failed'));

@@ -135,7 +135,7 @@ async function getBuildStats(buildPath: string): Promise<{ totalSize: number; fi
           fileCount++;
         }
       }
-    } catch (error) {
+    } catch {
       // Ignore permission errors
     }
   };

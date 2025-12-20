@@ -112,7 +112,6 @@ export async function storageCommand(options: any) {
       }
 
       // Get file extension and MIME type
-      const fileExt = path.extname(fileName).toLowerCase();
       const mimeType = mime.lookup(filePath) || 'application/octet-stream';
       
       // Check allowed types
@@ -393,7 +392,7 @@ export async function storageCommand(options: any) {
     try {
       const apiUrl = await buildApiUrl('/storage');
       console.log(chalk.cyan(`   API URL: ${apiUrl}`));
-    } catch (e) {
+    } catch {
       console.log(chalk.cyan('   Could not get API URL'));
     }
   }

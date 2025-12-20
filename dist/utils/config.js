@@ -59,6 +59,7 @@ exports.validateApiEndpoints = validateApiEndpoints;
 exports.testAllEndpoints = testAllEndpoints;
 const os_1 = require("os");
 const path_1 = require("path");
+const url_1 = require("url");
 const fs_extra_1 = __importDefault(require("fs-extra"));
 const axios_1 = __importDefault(require("axios"));
 const chalk_1 = __importDefault(require("chalk"));
@@ -69,7 +70,7 @@ async function determineBestApiUrl() {
         console.log(chalk_1.default.gray('   🔍 Auto-detecting best API URL...'));
         const testUrls = [
             { name: 'localhost', url: 'http://localhost:3000/api/v1' },
-            { name: 'ngrok', url: 'https://75ed3a070bbc.ngrok-free.app/api/v1' },
+            { name: 'ngrok', url: 'https://af354cda3bc2.ngrok-free.app/api/v1' },
             { name: 'local IP', url: 'http://192.168.1.4:3000/api/v1' },
         ];
         for (const test of testUrls) {
@@ -82,14 +83,14 @@ async function determineBestApiUrl() {
                 }
             }
             catch (error) {
-                console.log(chalk_1.default.yellow(`   ❌ ${test.name} not reachable`));
+                console.log(chalk_1.default.yellow(`   ❌ ${test.name} not reachable: ${error}`));
             }
         }
         console.log(chalk_1.default.gray('   ⚠️  No reachable URLs found, using default'));
         return 'http://localhost:3000/api/v1';
     }
     catch (error) {
-        console.log(chalk_1.default.gray('   ⚠️  Error determining best URL, using localhost'));
+        console.log(chalk_1.default.gray(`   ⚠️  Error determining best URL: ${error}, using localhost`));
         return 'http://localhost:3000/api/v1';
     }
 }
@@ -112,7 +113,7 @@ async function getConfig() {
         return defaultConfig;
     }
     catch (error) {
-        console.error('Error reading config:', error);
+        console.error('Error reading config:', error.message || error);
         return {
             apiUrl: 'http://localhost:3000/api/v1',
             useLocalhost: false,
@@ -167,7 +168,7 @@ async function autoDetectConnection() {
     console.log(chalk_1.default.gray('   🔍 Auto-detecting connection...'));
     const testUrls = [
         { type: 'localhost', url: 'http://localhost:3000/api/v1' },
-        { type: 'ngrok', url: 'https://75ed3a070bbc.ngrok-free.app/api/v1' },
+        { type: 'ngrok', url: 'https://af354cda3bc2.ngrok-free.app/api/v1' },
         { type: 'ip', url: 'http://192.168.1.4:3000/api/v1' },
     ];
     for (const test of testUrls) {
@@ -184,7 +185,7 @@ async function autoDetectConnection() {
             }
         }
         catch (error) {
-            console.log(chalk_1.default.yellow(`   ❌ ${test.type} not reachable`));
+            console.log(chalk_1.default.yellow(`   ❌ ${test.type} not reachable: ${error.message || error}`));
         }
     }
     return {
@@ -219,7 +220,7 @@ async function setupWizard() {
                 if (!input)
                     return 'URL is required';
                 try {
-                    new URL(input);
+                    new url_1.URL(input);
                     return true;
                 }
                 catch {
@@ -233,7 +234,7 @@ async function setupWizard() {
         case 'localhost':
             apiUrl = 'http://localhost:3000/api/v1';
             break;
-        case 'ngrok':
+        case 'ngrok': {
             console.log(chalk_1.default.yellow('\n⚠️  Note: You need to run ngrok separately:'));
             console.log(chalk_1.default.cyan('  1. Install ngrok: https://ngrok.com/download'));
             console.log(chalk_1.default.cyan('  2. Run: ngrok http 3000'));
@@ -247,7 +248,7 @@ async function setupWizard() {
                         if (!input)
                             return 'URL is required';
                         try {
-                            new URL(input);
+                            new url_1.URL(input);
                             return true;
                         }
                         catch {
@@ -258,6 +259,7 @@ async function setupWizard() {
             ]);
             apiUrl = `${ngrokUrl}/api/v1`;
             break;
+        }
         case 'custom':
             apiUrl = answers.customUrl;
             break;
@@ -300,7 +302,11 @@ async function loginCommand(apiKey) {
         if (!response.data.success) {
             throw new Error(response.data.error || 'Login failed');
         }
-        const { user, apiKey: keyInfo, session } = response.data.data;
+        const { user, session } = response.data.data;
+        let expiresAt = session?.expiresAt;
+        if (!expiresAt && session?.expiresIn) {
+            expiresAt = new Date(Date.now() + (session.expiresIn * 1000)).toISOString();
+        }
         await saveConfig({
             apiKey: apiKey,
             userId: user.id,
@@ -311,23 +317,24 @@ async function loginCommand(apiKey) {
             isSeller: user.isSeller || false,
             isAdmin: user.isAdmin || false,
             sessionToken: session?.token,
-            expiresAt: session?.expiresAt,
+            expiresAt: expiresAt,
             lastLogin: new Date().toISOString()
         });
         return user;
     }
     catch (error) {
-        if (error.code === 'ECONNREFUSED') {
+        const err = error;
+        if (err.code === 'ECONNREFUSED') {
             throw new Error(`Cannot connect to MGZON API at ${await getApiUrl()}. Is the server running?`);
         }
-        else if (error.response?.status === 401) {
+        else if (err.response?.status === 401) {
             throw new Error('Invalid API key.');
         }
-        else if (error.response?.data?.error) {
-            throw new Error(error.response.data.error);
+        else if (err.response?.data?.error) {
+            throw new Error(err.response.data.error);
         }
         else {
-            throw new Error(`Login failed: ${error.message}`);
+            throw new Error(`Login failed: ${error.message || error}`);
         }
     }
 }
@@ -356,10 +363,11 @@ async function verifyApiKey(apiKey) {
         return response.data;
     }
     catch (error) {
-        if (error.response?.status === 401) {
+        const err = error;
+        if (err.response?.status === 401) {
             throw new Error('Invalid API key');
         }
-        else if (error.code === 'ECONNREFUSED') {
+        else if (err.code === 'ECONNREFUSED') {
             throw new Error('Cannot connect to API server. Check if server is running.');
         }
         throw error;
@@ -376,10 +384,11 @@ async function testApiConnection() {
         };
     }
     catch (error) {
+        const err = error;
         return {
             success: false,
             url: await getApiUrl(),
-            error: error.message
+            error: err.message
         };
     }
 }
@@ -392,7 +401,7 @@ async function logout() {
                 headers: { 'Authorization': `Bearer ${config.apiKey}` }
             });
         }
-        catch (error) {
+        catch {
             console.warn(chalk_1.default.yellow('Warning: Could not logout from API server'));
         }
     }
@@ -459,7 +468,8 @@ async function checkForUpdates() {
         const response = await axios_1.default.get('https://registry.npmjs.org/@mgzon/cli/latest', {
             timeout: 3000
         });
-        const currentVersion = require('../../package.json').version;
+        const packageJson = await fs_extra_1.default.readJson((0, path_1.join)(__dirname, '../../package.json'));
+        const currentVersion = packageJson.version;
         const latestVersion = response.data.version;
         if (currentVersion !== latestVersion) {
             console.log(chalk_1.default.yellow('\n' + '─'.repeat(50)));
@@ -470,7 +480,7 @@ async function checkForUpdates() {
             console.log(chalk_1.default.yellow('─'.repeat(50) + '\n'));
         }
     }
-    catch (error) {
+    catch {
     }
 }
 async function validateApiEndpoints() {
@@ -490,7 +500,7 @@ async function testAllEndpoints() {
             const response = await axios_1.default.get(url, { timeout: 3000 });
             results[name] = response.status === 200;
         }
-        catch (error) {
+        catch {
             results[name] = false;
         }
     }

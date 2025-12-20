@@ -4,6 +4,7 @@ import ora, { Ora } from 'ora';
 import { getConfig, getApiKey, getApiUrl, testApiConnection } from '../utils/config';
 import axios from 'axios';
 import { networkInterfaces } from 'os';
+import fs from 'fs-extra';
 
 export async function debugCommand(options: any) {
   const spinner = ora('Starting debug...').start();
@@ -49,7 +50,8 @@ async function debugAll(spinner: Ora) {
   // CLI Information
   console.log(chalk.bold('\n🛠️  CLI Information'));
   console.log(chalk.gray('─'.repeat(40)));
-  console.log(chalk.cyan(`Version:     ${require('../../../package.json').version}`));
+  const packageJson = await fs.readJson(process.cwd() + '/package.json');
+  console.log(chalk.cyan(`Version:     ${packageJson.version}`));
   console.log(chalk.cyan(`Config path: ${process.env.HOME}/.mgzon/config.json`));
   
   // Authentication
@@ -122,7 +124,7 @@ async function debugAll(spinner: Ora) {
       } else {
         console.log(chalk.yellow(`  ${test.name.padEnd(15)}: ⚠️  Responded (${response.status})`));
       }
-    } catch (error) {
+    } catch {
       console.log(chalk.red(`  ${test.name.padEnd(15)}: ❌ Unreachable`));
     }
   }
@@ -242,7 +244,7 @@ async function debugNetwork(spinner: Ora) {
       await axios.get(`${url}/health`, { timeout: 2000 });
       const end = Date.now();
       console.log(chalk.green(`  ✅ ${url} - ${end - start}ms`));
-    } catch (error) {
+    } catch {
       console.log(chalk.red(`  ❌ ${url} - Unreachable`));
     }
   }

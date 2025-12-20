@@ -1,6 +1,7 @@
 // /workspaces/mgzon-cli/src/commands/setup.ts
 import chalk from 'chalk';
-import { setupWizard, getConfig } from '../utils/config';
+import { URL } from 'url';
+import { getConfig } from '../utils/config';
 
 export async function setupCommand() {
   console.log(chalk.blue(

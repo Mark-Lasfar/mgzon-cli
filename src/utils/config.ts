@@ -1,6 +1,7 @@
 // /workspaces/mgzon-cli/src/utils/config.ts
 import { homedir } from 'os';
 import { join } from 'path';
+import { URL } from 'url';
 import fs from 'fs-extra';
 import axios from 'axios';
 import chalk from 'chalk';
@@ -37,7 +38,7 @@ async function determineBestApiUrl(): Promise<string> {
     
     const testUrls = [
       { name: 'localhost', url: 'http://localhost:3000/api/v1' },
-      { name: 'ngrok', url: 'https://75ed3a070bbc.ngrok-free.app/api/v1' }, // ⭐⭐ مثال
+      { name: 'ngrok', url: 'https://af354cda3bc2.ngrok-free.app/api/v1' }, // ⭐⭐ مثال
       { name: 'local IP', url: 'http://192.168.1.4:3000/api/v1' }, // ⭐⭐ من الـ logs
     ];
     
@@ -50,8 +51,8 @@ async function determineBestApiUrl(): Promise<string> {
           console.log(chalk.green(`   ✅ ${test.name} is reachable`));
           return test.url;
         }
-      } catch (error) {
-        console.log(chalk.yellow(`   ❌ ${test.name} not reachable`));
+      } catch (error: unknown) {
+        console.log(chalk.yellow(`   ❌ ${test.name} not reachable: ${error}`));
       }
     }
     
@@ -59,7 +60,7 @@ async function determineBestApiUrl(): Promise<string> {
     return 'http://localhost:3000/api/v1';
     
   } catch (error) {
-    console.log(chalk.gray('   ⚠️  Error determining best URL, using localhost'));
+    console.log(chalk.gray(`   ⚠️  Error determining best URL: ${error}, using localhost`));
     return 'http://localhost:3000/api/v1';
   }
 }
@@ -86,8 +87,8 @@ export async function getConfig(): Promise<CliConfig> {
     
     await fs.writeJson(CONFIG_FILE, defaultConfig, { spaces: 2 });
     return defaultConfig;
-  } catch (error) {
-    console.error('Error reading config:', error);
+  } catch (error: any) {
+    console.error('Error reading config:', error.message || error);
     return { 
       apiUrl: 'http://localhost:3000/api/v1',
       useLocalhost: false,
@@ -161,7 +162,7 @@ export async function autoDetectConnection(): Promise<{
   
   const testUrls = [
     { type: 'localhost', url: 'http://localhost:3000/api/v1' },
-    { type: 'ngrok', url: 'https://75ed3a070bbc.ngrok-free.app/api/v1' },
+    { type: 'ngrok', url: 'https://af354cda3bc2.ngrok-free.app/api/v1' },
     { type: 'ip', url: 'http://192.168.1.4:3000/api/v1' },
   ];
   
@@ -173,13 +174,13 @@ export async function autoDetectConnection(): Promise<{
       if (response.status === 200) {
         console.log(chalk.green(`   ✅ ${test.type} is reachable`));
         return {
-          type: test.type as any,
+          type: test.type as 'localhost' | 'ngrok' | 'ip' | 'unknown',
           url: test.url,
           reachable: true
         };
       }
-    } catch (error) {
-      console.log(chalk.yellow(`   ❌ ${test.type} not reachable`));
+    } catch (error: any) {
+      console.log(chalk.yellow(`   ❌ ${test.type} not reachable: ${error.message || error}`));
     }
   }
   
@@ -233,7 +234,7 @@ export async function setupWizard() {
     case 'localhost':
       apiUrl = 'http://localhost:3000/api/v1';
       break;
-    case 'ngrok':
+    case 'ngrok': {
       console.log(chalk.yellow('\n⚠️  Note: You need to run ngrok separately:'));
       console.log(chalk.cyan('  1. Install ngrok: https://ngrok.com/download'));
       console.log(chalk.cyan('  2. Run: ngrok http 3000'));
@@ -258,6 +259,7 @@ export async function setupWizard() {
       
       apiUrl = `${ngrokUrl}/api/v1`;
       break;
+    }
     case 'custom':
       apiUrl = answers.customUrl;
       break;
@@ -288,7 +290,7 @@ export async function loginCommand(apiKey: string) {
         headers: { 'Content-Type': 'application/json' },
         timeout: 10000
       });
-    } catch (firstError: any) {
+    } catch (firstError: unknown) {
       // ⭐⭐ إذا فشل الاتصال، نجرب auto-detection
       console.log(chalk.yellow('   ⚠️  Connection failed, trying auto-detection...'));
       
@@ -315,7 +317,13 @@ export async function loginCommand(apiKey: string) {
       throw new Error(response.data.error || 'Login failed');
     }
 
-    const { user, apiKey: keyInfo, session } = response.data.data;
+    const { user, session } = response.data.data;
+    
+    // Calculate expiresAt from expiresIn if not provided
+    let expiresAt = session?.expiresAt;
+    if (!expiresAt && session?.expiresIn) {
+      expiresAt = new Date(Date.now() + (session.expiresIn * 1000)).toISOString();
+    }
     
     // Save
     await saveConfig({
@@ -328,20 +336,21 @@ export async function loginCommand(apiKey: string) {
       isSeller: user.isSeller || false,
       isAdmin: user.isAdmin || false,
       sessionToken: session?.token,
-      expiresAt: session?.expiresAt,
+      expiresAt: expiresAt,
       lastLogin: new Date().toISOString()
     });
 
     return user;
-  } catch (error: any) {
-    if (error.code === 'ECONNREFUSED') {
+  } catch (error: unknown) {
+    const err = error as any;
+    if (err.code === 'ECONNREFUSED') {
       throw new Error(`Cannot connect to MGZON API at ${await getApiUrl()}. Is the server running?`);
-    } else if (error.response?.status === 401) {
+    } else if (err.response?.status === 401) {
       throw new Error('Invalid API key.');
-    } else if (error.response?.data?.error) {
-      throw new Error(error.response.data.error);
+    } else if (err.response?.data?.error) {
+      throw new Error(err.response.data.error);
     } else {
-      throw new Error(`Login failed: ${error.message}`);
+      throw new Error(`Login failed: ${(error as any).message || error}`);
     }
   }
 }
@@ -379,10 +388,11 @@ export async function verifyApiKey(apiKey: string) {
     });
 
     return response.data;
-  } catch (error: any) {
-    if (error.response?.status === 401) {
+  } catch (error: unknown) {
+    const err = error as any;
+    if (err.response?.status === 401) {
       throw new Error('Invalid API key');
-    } else if (error.code === 'ECONNREFUSED') {
+    } else if (err.code === 'ECONNREFUSED') {
       throw new Error('Cannot connect to API server. Check if server is running.');
     }
     throw error;
@@ -400,11 +410,12 @@ export async function testApiConnection(): Promise<{ success: boolean; url: stri
       success: response.data.success || true,
       url: healthUrl
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as any;
     return {
       success: false,
       url: await getApiUrl(),
-      error: error.message
+      error: err.message
     };
   }
 }
@@ -419,7 +430,7 @@ export async function logout() {
       await axios.post(`${baseUrl}/api/v1/auth/logout`, {}, {
         headers: { 'Authorization': `Bearer ${config.apiKey}` }
       });
-    } catch (error) {
+    } catch {
       // Don't throw error if logout fails
       console.warn(chalk.yellow('Warning: Could not logout from API server'));
     }
@@ -498,7 +509,7 @@ export async function getProjectConfig(projectPath: string) {
 }
 
 // Save project config
-export async function saveProjectConfig(projectPath: string, config: any) {
+export async function saveProjectConfig(projectPath: string, config: Record<string, unknown>) {
   const projectConfigFile = join(projectPath, '.mgzon.json');
   await fs.writeJson(projectConfigFile, config, { spaces: 2 });
 }
@@ -510,7 +521,8 @@ export async function checkForUpdates() {
       timeout: 3000
     });
     
-    const currentVersion = require('../../package.json').version;
+    const packageJson = await fs.readJson(join(__dirname, '../../package.json'));
+    const currentVersion = packageJson.version;
     const latestVersion = response.data.version;
     
     if (currentVersion !== latestVersion) {
@@ -521,7 +533,7 @@ export async function checkForUpdates() {
       console.log(chalk.cyan('   Run: npm install -g @mgzon/cli'));
       console.log(chalk.yellow('─'.repeat(50) + '\n'));
     }
-  } catch (error) {
+  } catch {
     // Silent fail
   }
 }
@@ -552,7 +564,7 @@ export async function testAllEndpoints(): Promise<Record<string, boolean>> {
     try {
       const response = await axios.get(url, { timeout: 3000 });
       results[name] = response.status === 200;
-    } catch (error) {
+    } catch {
       results[name] = false;
     }
   }
