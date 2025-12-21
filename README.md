@@ -1,27 +1,38 @@
-
-```markdown
 # MGZON CLI 🚀
 
-   <p align="center">
-   <img src="./assets/icon_1024x1024.png" alt="MGZON Logo" width="200" />
-   </p>
+<p align="center">
+  <img src="./assets/icon_1024x1024.png" alt="MGZON Logo" width="200" />
+</p>
 
+<div align="center">
 
-
-
+```
   __  __    ____   _____   ___    _   _      ____   _       ___ 
  |  \/  |  / ___| |__  /  / _ \  | \ | |    / ___| | |     |_ _|
  | |\/| | | |  _    / /  | | | | |  \| |   | |     | |      | | 
  | |  | | | |_| |  / /_  | |_| | | |\  |   | |___  | |___   | | 
  |_|  |_|  \____| /____|  \___/  |_| \_|    \____| |_____| |___|
- 
+```
 
-The official Command Line Interface for MGZON App Development Platform.
+**The official Command Line Interface for MGZON App Development Platform**
 
-![MGZON CLI](https://raw.githubusercontent.com/Mark-Lasfar/mgzon-cli/refs/heads/master/assets/CLI.png)
+---
+
+</div>
+
+<p align="center">
+  <a href="https://github.com/Mark-Lasfar/mgzon-cli/releases">
+    <img src="https://raw.githubusercontent.com/Mark-Lasfar/mgzon-cli/refs/heads/master/assets/CLI.png" alt="MGZON CLI" width="100%" style="max-width: 600px; border-radius: 8px;" />
+  </a>
+</p>
+
+<p align="center">
+  
 ![License](https://img.shields.io/npm/l/@mgzon/cli.svg)
 ![Downloads](https://img.shields.io/npm/dm/@mgzon/cli.svg)
 ![Node Version](https://img.shields.io/node/v/@mgzon/cli)
+
+</p>
 
 ## 📦 Installation
 
