@@ -2,9 +2,8 @@
 ```markdown
 # MGZON CLI 🚀
 
-   <p align="center">
-   <img src="./assets/mg.svg" alt="MGZON Logo" width="200" />
-   </p>
+![MGZON CLI](https://raw.githubusercontent.com/Mark-Lasfar/mgzon-cli/c6f01cda372f6c9bffb325467dd2db26e3a3aeac/assets/mg.svg)
+
 
 
 
