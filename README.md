@@ -2,9 +2,10 @@
 ```markdown
 # MGZON CLI 🚀
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Mark-Lasfar/MGZon/978bf51a14ac24a66d614fd5d78f22971261a498/public/icons/mg.svg" alt="MGZON Logo" width="200" />
-</p>
+   <p align="center">
+   <img src="./assets/icon_1024x1024.png" alt="MGZON Logo" width="200" />
+   </p>
+
 
 
 
@@ -17,7 +18,7 @@
 
 The official Command Line Interface for MGZON App Development Platform.
 
-![MGZON CLI](https://img.shields.io/npm/v/@mgzon/cli.svg)
+![MGZON CLI](assets/CLI.png)
 ![License](https://img.shields.io/npm/l/@mgzon/cli.svg)
 ![Downloads](https://img.shields.io/npm/dm/@mgzon/cli.svg)
 ![Node Version](https://img.shields.io/node/v/@mgzon/cli)
