@@ -1,358 +1,284 @@
+# MGZON CLI Documentation
 
-```markdown
-# MGZON CLI 🚀
+Welcome to the MGZON CLI documentation. This comprehensive guide covers everything you need to know about installing, using, and understanding the MGZON Command Line Interface and Graphical User Interface.
 
-   <p align="center">
-   <img src="./assets/icon_1024x1024.png" alt="MGZON Logo" width="200" />
-   </p>
+## Repository Boundary: Public vs Private
+
+### Public Repository (This Repository)
+**Contains:**
+- ✅ User installation guides and binaries
+- ✅ API interface definitions (types only)
+- ✅ Usage examples and workflows
+- ✅ Architecture diagrams and explanations
+- ✅ Troubleshooting guides
+- ✅ Release notes and changelogs
+
+**Does NOT contain:**
+- ❌ Source code implementations
+- ❌ Authentication logic
+- ❌ API client code
+- ❌ Internal business logic
+- ❌ Database schemas
+- ❌ Security credentials
+- ❌ Build scripts and CI/CD configurations
+
+### Private Repository (mgzon-cli-core)
+**Contains:**
+- Source code implementations
+- Internal build and deployment scripts
+- Authentication and security logic
+- API integration code
+- Database configurations
+- Test suites with real credentials
+- Internal documentation for developers
+
+### Boundary Enforcement
+- **Code Reviews**: All public repository changes reviewed for sensitive content
+- **Automated Checks**: CI/CD pipelines scan for accidental exposure
+- **Access Controls**: Private repository restricted to authorized developers
+- **Documentation Reviews**: Ensure docs don't reveal implementation details
+
+## Quick Start
+
+- [Installation Guide](installation.mdx) - How to install MGZON CLI and GUI
+- [User Flow Guide](user-flow.mdx) - Step-by-step workflows
+- [End-to-End Flow](end-to-end-flow.mdx) - Complete user journey
+- [Architecture Diagram](architecture-diagram.md) - High-level system overview
+
+## Detailed Documentation
+
+### For CLI Users
+- Command reference and examples
+- Configuration options
+- Troubleshooting guide
+
+### For GUI Users
+- Interface overview
+- Feature explanations
+- Integration details
+
+### For Developers
+- [GUI-Backend Interaction](gui-backend-interaction.mdx) - How components communicate
+- API integration patterns
+- Extension development
+
+## Architecture
+
+### System Components
+- CLI command processor
+- GUI desktop application
+- API communication layer
+- Authentication system
+
+### Data Flow
+- User input processing
+- Command execution
+- API interactions
+- Response handling
+
+## Security & Privacy
+
+For information about our security practices and privacy protection measures, see our [Privacy & Security Implementation Plan](../PRIVACY_SECURITY_PLAN.md).
+
+## Support
+
+- [GitHub Issues](https://github.com/Mark-Lasfar/mgzon-cli/issues) - Report bugs and request features
+- [Documentation Issues](https://github.com/Mark-Lasfar/mgzon-cli/issues) - Report documentation problems
+- Community Discord - Get help from the community
+
+## Contributing
+
+We welcome contributions to our documentation! Please see our contributing guide for details on how to help improve the MGZON CLI documentation.
 
 
+---
+title: Installation Guide
+description: How to install MGZON CLI and GUI applications
+---
 
+# Installation Guide
 
-  __  __    ____   _____   ___    _   _      ____   _       ___ 
- |  \/  |  / ___| |__  /  / _ \  | \ | |    / ___| | |     |_ _|
- | |\/| | | |  _    / /  | | | | |  \| |   | |     | |      | | 
- | |  | | | |_| |  / /_  | |_| | | |\  |   | |___  | |___   | | 
- |_|  |_|  \____| /____|  \___/  |_| \_|    \____| |_____| |___|
- 
+MGZON provides multiple installation options to suit different user preferences and system requirements.
 
-The official Command Line Interface for MGZON App Development Platform.
+## Prerequisites
 
-![MGZON CLI](https://raw.githubusercontent.com/Mark-Lasfar/mgzon-cli/refs/heads/master/assets/CLI.png)
-![License](https://img.shields.io/npm/l/@mgzon/cli.svg)
-![Downloads](https://img.shields.io/npm/dm/@mgzon/cli.svg)
-![Node Version](https://img.shields.io/node/v/@mgzon/cli)
+- **Operating System**: Linux, macOS, or Windows
+- **For NPM installation**: Node.js 16.0.0+ and npm 7.0.0+
 
-## 📦 Installation
+## Installation Options
 
-### Option 1: Install via npm (Recommended for developers)
+### Option 1: NPM Package (Recommended for Developers)
 
-Install globally using npm:
+The NPM package provides the most up-to-date version and integrates well with Node.js development workflows.
 
 ```bash
+# Install globally
 npm install -g @mgzon/cli
+
+# Verify installation
+mz --version
 ```
 
-Or using yarn:
+**Pros:**
+- Automatic updates via npm
+- Integrates with existing Node.js toolchain
+- Access to latest features immediately
 
-```bash
-yarn global add @mgzon/cli
-```
+**Cons:**
+- Requires Node.js installation
+- May have slower startup on some systems
 
-Or using pnpm:
+### Option 2: Standalone Executables
 
-```bash
-pnpm add -g @mgzon/cli
-```
-
-### Option 2: Standalone Executables (No Node.js required)
-
-Download the pre-built executables for your platform:
+Pre-compiled binaries that bundle Node.js runtime - no additional dependencies required.
 
 #### Linux
 ```bash
-# Download and make executable
-curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/mgzon-linux -o mgzon
+# Download the executable
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-linux -o mgzon
+
+# Make executable and move to PATH
 chmod +x mgzon
 sudo mv mgzon /usr/local/bin/
 ```
 
 #### macOS
 ```bash
-# Download and make executable
-curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/mgzon-macos -o mgzon
+# Download the executable
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/mgzon-macos -o mgzon
+
+# Make executable and move to PATH
 chmod +x mgzon
 sudo mv mgzon /usr/local/bin/
 ```
 
 #### Windows
-```bash
-# Download from releases page and add to PATH
-# https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/mgzon-win.exe
-```
+1. Download `mgzon-win.exe` from the latest release
+2. Add the executable to your system PATH, or
+3. Run directly from the download location
 
-Verify installation:
+**Pros:**
+- No Node.js dependency
+- Faster startup times
+- Portable across systems
 
-```bash
-mz --version
-# or
-mgzon --version
-```
+**Cons:**
+- Manual update process
+- Larger file sizes due to bundled runtime
 
 ### Option 3: GUI Application
 
-For users who prefer a graphical interface, download the MGZON GUI app:
+Full-featured desktop application with graphical interface.
 
-- **Linux**: [Download AppImage](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON.GUI-1.0.0.AppImage)
-- **macOS**: [Download DMG](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON.GUI-1.0.0.dmg)  
-- **Windows**: [Download EXE](https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v1.0.0/MGZON.GUI.exe)
-
-The GUI provides the same functionality as the CLI but with a user-friendly interface.
-
-#### GUI Features
-
-- **Dashboard**: Quick access to common actions and system status
-- **Project Management**: Create, open, and manage MGZON projects
-- **App Management**: List, create, and manage your applications
-- **File Storage**: Upload and manage files in MGZON storage
-- **Settings**: Configure authentication, CLI settings, and preferences
-- **Terminal Output**: Real-time command execution feedback
-
-The GUI automatically detects and uses the bundled CLI executable for all operations.
-
-#### Running the GUI
-
-**Linux (AppImage):**
+#### Linux
 ```bash
-chmod +x MGZON.GUI-1.0.0.AppImage
-./MGZON.GUI-1.0.0.AppImage
+# Download and run the AppImage
+curl -L https://github.com/Mark-Lasfar/mgzon-cli/releases/latest/download/MGZON-GUI-1.0.0.AppImage -o mgzon-gui.AppImage
+chmod +x mgzon-gui.AppImage
+./mgzon-gui.AppImage
 ```
 
-**macOS (DMG):**
-Double-click the downloaded DMG file and drag the app to Applications.
+#### macOS
+1. Download the `.dmg` file from releases
+2. Open the DMG and drag MGZON GUI to Applications
+3. Launch from Applications folder
 
-**Windows (EXE):**
-Double-click the downloaded EXE file to install and run.
+#### Windows
+1. Download the `.exe` installer from releases
+2. Run the installer
+3. Launch MGZON GUI from Start Menu
 
-## 🚀 Quick Start
+**Pros:**
+- User-friendly graphical interface
+- Integrated terminal output
+- File/folder selection dialogs
 
-### Try the Demo Script
+**Cons:**
+- Larger download size
+- Requires more system resources
 
-Run the included demo script to see common CLI usage:
+## Post-Installation Setup
 
-```bash
-# Make sure you're in the project directory
-cd mgzon-cli
+### First-Time Configuration
 
-# Run the demo
-./demo.sh
-```
+1. **Verify Installation**
+   ```bash
+   mz --version
+   # Should display version information
+   ```
 
-### Manual Quick Start
+2. **Authenticate**
+   ```bash
+   mz login
+   # Follow the authentication prompts
+   ```
 
-```bash
-# Create a new MGZON app
-mz init my-app --template=nextjs
+3. **Check Status**
+   ```bash
+   mz whoami
+   # Should show your account information
+   ```
 
-# Navigate to your app
-cd my-app
+### Environment Configuration
 
-# Install dependencies
-npm install
-
-# Start development server
-mz serve
-
-# Deploy to MGZON
-mz deploy
-```
-
-## 🔧 Core Commands
-
-### 🏗️ Project Management
-- `mz init [name]` - Create a new MGZON app
-- `mz serve` - Start local development server
-- `mz build` - Build your app for production
-- `mz deploy` - Deploy app to MGZON cloud
-
-### 🔐 Authentication
-- `mz login` - Login to your MGZON account
-- `mz logout` - Logout from current session
-- `mz whoami` - Show current user info
-
-### 🔑 API Management
-- `mz keys:list` - List your API keys
-- `mz keys:generate` - Generate new API key
-- `mz keys:revoke <key-id>` - Revoke an API key
-
-### 📊 App Management
-- `mz apps:list` - List your apps
-- `mz apps:create <name>` - Create new app
-- `mz apps:info <app-id>` - Show app details
-- `mz apps:delete <app-id>` - Delete an app
-
-### 📦 Database
-- `mz db:create` - Create database schema
-- `mz db:migrate` - Run database migrations
-- `mz db:seed` - Seed database with sample data
-
-### 📁 File Management
-- `mz storage:upload <file>` - Upload file to storage
-- `mz storage:list` - List storage files
-- `mz storage:delete <file-id>` - Delete file
-
-## 🎨 Templates
-
-Available templates for `mz init`:
-
-```bash
-# Next.js template (default)
-mz init my-app --template=nextjs
-
-# React template
-mz init my-app --template=react
-
-# Vue.js template
-mz init my-app --template=vue
-
-# Static site template
-mz init my-app --template=static
-
-# E-commerce template
-mz init my-app --template=ecommerce
-```
-
-## ⚙️ Configuration
-
-### Environment Setup
-Create `.mgzonrc` in your project root:
+Create a global configuration file at `~/.mgzonrc`:
 
 ```json
 {
-  "projectId": "your-project-id",
-  "apiKey": "your-api-key",
-  "environment": "development"
+  "defaultOrganization": "your-org",
+  "defaultEnvironment": "development",
+  "theme": "dark"
 }
 ```
 
-Or use environment variables:
-
+Or set environment variables:
 ```bash
 export MGZON_API_KEY="your-api-key"
 export MGZON_PROJECT_ID="your-project-id"
 ```
 
-### Global Configuration
-```bash
-# Set default organization
-mz config:set organization=my-org
-
-# Set default environment
-mz config:set environment=staging
-
-# View all configurations
-mz config:list
-```
-
-## 🔌 Plugins
-
-Extend CLI functionality with plugins:
-
-```bash
-# Install plugin
-mz plugins:install @mgzon/plugin-analytics
-
-# List installed plugins
-mz plugins:list
-
-# Update plugins
-mz plugins:update
-```
-
-## 🐛 Troubleshooting
+## Troubleshooting Installation
 
 ### Common Issues
 
-1. **"Command not found" after installation**
-   ```bash
-   # Add npm global bin to PATH
-   export PATH="$PATH:$HOME/.npm-global/bin"
-   # For fish shell: set -U fish_user_paths $HOME/.npm-global/bin $fish_user_paths
-   ```
-
-2. **Authentication failed**
-   ```bash
-   # Clear authentication cache
-   mz logout
-   mz login
-   ```
-
-3. **Deployment failed**
-   ```bash
-   # Check deployment logs
-   mz logs --deployment=<deployment-id>
-   
-   # View build logs
-   mz logs --build=<build-id>
-   ```
-
-## 🛠️ Development
-
-### Local Development
+**"Command not found" after npm install**
 ```bash
-# Clone repository
-git clone https://github.com/mgzon/mgzon-cli.git
-cd mgzon-cli
-
-# Install dependencies
-npm install
-
-# Build project
-npm run build
-
-# Run demo script
-./demo.sh
-
-# Link for local development
-npm link
-
-# Run tests
-npm test
-
-# Run in development mode
-npm run dev -- --help
+# Add npm global bin to PATH
+export PATH="$PATH:$(npm config get prefix)/bin"
 ```
 
-### Project Structure
-```
-mgzon-cli/
-├── src/
-│   ├── commands/          # CLI commands
-│   ├── lib/              # Core libraries
-│   ├── utils/            # Utility functions
-│   ├── types/            # TypeScript types
-│   └── index.ts          # Entry point
-├── dist/                 # Compiled output
-├── tests/                # Test files
-└── docs/                 # Documentation
+**Permission errors on Linux/macOS**
+```bash
+# Use sudo for system-wide installation
+sudo npm install -g @mgzon/cli
 ```
 
-## 📚 Documentation
+**Antivirus blocking executable**
+- Add exceptions for MGZON executables in your antivirus software
+- Download from official GitHub releases only
 
-Complete documentation is available in the [docs/](docs/) directory:
+### Verification Commands
 
-- **[Installation Guide](docs/installation.mdx)** - Detailed installation instructions
-- **[User Flow Guide](docs/user-flow.mdx)** - Step-by-step user workflows
-- **[GUI-Backend Interaction](docs/gui-backend-interaction.mdx)** - How the GUI communicates with services
-- **[End-to-End Flow](docs/end-to-end-flow.mdx)** - Complete user journey from installation to execution
-- **[Architecture Diagram](docs/architecture-diagram.md)** - High-level system overview
+```bash
+# Check CLI version
+mz --version
 
-For privacy and security reasons, implementation details are not exposed in this public repository. The documentation provides comprehensive guidance on usage and architecture without revealing sensitive code.
+# Test basic functionality
+mz --help
 
-See our [Privacy & Security Implementation Plan](PRIVACY_SECURITY_PLAN.md) for details on our approach to protecting intellectual property and user data.
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -am 'Add new feature'`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-- 📧 Email: support@mgzon.com
-- 🐛 Issues: [GitHub Issues](https://github.com/mgzon/mgzon-cli/issues)
-- 💬 Discord: [Join our community](https://discord.gg/mgzon)
-- 🐦 Twitter: [@mgzon_dev](https://twitter.com/mgzon_dev)
-
----
-
-Made with ❤️ by the MGZON Team
+# Verify authentication
+mz whoami
 ```
+
+## Updating
+
+### NPM Installation
+```bash
+npm update -g @mgzon/cli
+```
+
+### Standalone Executables
+Download the latest release from GitHub and replace the existing executable.
+
+### GUI Application
+The GUI includes an update checker - use the "Check for Updates" button in Settings.
