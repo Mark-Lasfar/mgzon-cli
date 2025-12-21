@@ -18,7 +18,7 @@
 
 The official Command Line Interface for MGZON App Development Platform.
 
-![MGZON CLI](assets/CLI.png)
+![MGZON CLI](https://raw.githubusercontent.com/Mark-Lasfar/mgzon-cli/refs/heads/master/assets/CLI.png)
 ![License](https://img.shields.io/npm/l/@mgzon/cli.svg)
 ![Downloads](https://img.shields.io/npm/dm/@mgzon/cli.svg)
 ![Node Version](https://img.shields.io/node/v/@mgzon/cli)
