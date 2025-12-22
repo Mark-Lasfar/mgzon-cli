@@ -9,7 +9,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            gui_cmd: linux
+            cli_name: mgzon-linux
+            gui_ext: AppImage
+
+          - os: macos-latest
+            gui_cmd: mac
+            cli_name: mgzon-macos
+            gui_ext: dmg
+
+          - os: windows-latest
+            gui_cmd: win
+            cli_name: mgzon-win.exe
+            gui_ext: exe
 
     steps:
       - name: Checkout code
@@ -20,63 +34,55 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
 
+      # ---------------- CLI ----------------
       - name: Build CLI
         run: npm run build
 
-      - name: Build executable with pkg
+      - name: Package CLI (pkg)
         run: npm run package
 
-      # Rename binaries per OS
-      - name: Rename binaries
-        run: |
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            mv bin/mgzon mgzon-linux
-          elif [ "${{ runner.os }}" = "macOS" ]; then
-            mv bin/mgzon mgzon-macos
-          elif [ "${{ runner.os }}" = "Windows" ]; then
-            ren bin\mgzon.exe mgzon-win.exe
-        shell: bash
+      # ---------------- GUI ----------------
+      - name: Install GUI dependencies
+        run: cd gui && npm ci
 
-      # Create ZIP archives
-      - name: Compress binaries
-        run: |
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            zip mgzon-linux.zip mgzon-linux
-          elif [ "${{ runner.os }}" = "macOS" ]; then
-            zip mgzon-macos.zip mgzon-macos
-          elif [ "${{ runner.os }}" = "Windows" ]; then
-            powershell Compress-Archive -Path mgzon-win.exe -DestinationPath mgzon-win.zip
-        shell: bash
+      - name: Package GUI
+        run: npm run package:gui:${{ matrix.gui_cmd }}
 
-      # Generate SHA256 checksums
+      # ---------------- Organize files ----------------
+      - name: Organize binaries
+        shell: bash
+        run: |
+          # CLI
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            mv bin/mgzon ${{ matrix.cli_name }}
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            mv bin/mgzon ${{ matrix.cli_name }}
+          else
+            mv bin\mgzon.exe ${{ matrix.cli_name }}
+          fi
+
+          # GUI
+          mv bin/gui/*.${{ matrix.gui_ext }} MGZON-GUI-${{ matrix.os }}.${{ matrix.gui_ext }} || true
+
+      # ---------------- Checksums ----------------
       - name: Generate checksums
-        run: |
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            sha256sum mgzon-linux.zip > mgzon-linux.zip.sha256
-          elif [ "${{ runner.os }}" = "macOS" ]; then
-            shasum -a 256 mgzon-macos.zip > mgzon-macos.zip.sha256
-          elif [ "${{ runner.os }}" = "Windows" ]; then
-            powershell Get-FileHash mgzon-win.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash) mgzon-win.zip" } > mgzon-win.zip.sha256
         shell: bash
-
-      # Extract release notes from CHANGELOG.md
-      - name: Generate Release Notes
-        id: changelog
         run: |
-          awk '/## \[Unreleased\]/,/^## / {if (!/## /) print}' CHANGELOG.md > release_notes.md
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            powershell Get-FileHash ${{ matrix.cli_name }} -Algorithm SHA256 |
+              ForEach-Object { "$($_.Hash.ToLower())  ${{ matrix.cli_name }}" } > ${{ matrix.cli_name }}.sha256
+          else
+            shasum -a 256 ${{ matrix.cli_name }} > ${{ matrix.cli_name }}.sha256
+          fi
 
-      # Upload binaries and release notes to GitHub Release
+      # ---------------- Upload ----------------
       - name: Upload assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            mgzon-linux.zip
-            mgzon-linux.zip.sha256
-            mgzon-macos.zip
-            mgzon-macos.zip.sha256
-            mgzon-win.zip
-            mgzon-win.zip.sha256
-            release_notes.md
+            ${{ matrix.cli_name }}
+            ${{ matrix.cli_name }}.sha256
+            MGZON.GUI.${{ matrix.gui_ext }}

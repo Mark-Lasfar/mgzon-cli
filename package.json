@@ -1,6 +1,6 @@
 {
   "name": "@mgzon/cli",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "MGZON Command Line Interface - Official CLI tool for MGZON ecommerce platform",
   "main": "dist/index.js",
   "bin": {
@@ -8,19 +8,27 @@
     "mgzon": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node src/index.ts",
-    "start": "node dist/index.js",
-    "package": "pkg dist/index.js --targets node16-linux-x64,node16-macos-x64,node16-win-x64 --output bin/mgzon",
-    "prepublishOnly": "npm run build",
-    "test": "echo \"No tests yet - add tests in future version\"",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
-    "postbuild": "chmod +x dist/index.js"
-  },
+  "build": "tsc",
+  "dev": "ts-node src/index.ts",
+  "start": "node dist/index.js",
+  "package": "pkg dist/index.js --targets node16-linux-x64,node16-macos-x64,node16-win-x64 --output bin/mgzon",
+
+  "prepublishOnly": "npm run build",
+  "test": "echo \"No tests yet - add tests in future version\"",
+
+  "lint": "eslint src --ext .ts",
+  "lint:fix": "eslint src --ext .ts --fix",
+  "format": "prettier --write \"src/**/*.ts\"",
+
+  "clean": "rm -rf dist",
+  "prebuild": "npm run clean",
+  "postbuild": "chmod +x dist/index.js",
+
+  "package:gui": "cd gui && npm run build && npm run convert-icons && electron-builder",
+  "package:gui:linux": "cd gui && npm run package:linux",
+  "package:gui:mac": "cd gui && npm run package:mac",
+  "package:gui:win": "cd gui && npm run package:win"
+},
   "keywords": [
     "mgzon",
     "ecommerce",
