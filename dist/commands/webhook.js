@@ -271,7 +271,7 @@ async function webhookCommand(options) {
                     userId: 'test_user_123',
                     timestamp: new Date().toISOString(),
                     metadata: {
-                        version: '2.0.1',
+                        version: '2.0.2',
                         previousVersion: '1.0.0',
                         updateType: 'major',
                         changelog: ['Added new features', 'Fixed bugs']
