@@ -1,0 +1,73 @@
+{
+  "name": "mgzon-gui",
+  "version": "2.0.6",
+  "description": "MGZON GUI - Graphical User Interface for MGZON CLI",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "concurrently \"npm run build -- --watch\" \"npm run start\"",
+    "start": "electron dist/main.js",
+
+    "package": "npm run build && npm run convert-icons && electron-builder",
+    "package:linux": "npm run build && npm run convert-icons && electron-builder --linux",
+    "package:mac": "npm run build && npm run convert-icons && electron-builder --mac",
+    "package:win": "npm run build && npm run convert-icons && electron-builder --win",
+
+    "convert-icons": "node convert-icons.js",
+    "clean": "rm -rf dist build"
+  },
+  "build": {
+    "appId": "com.mgzon.gui",
+    "productName": "MGZON GUI",
+    "directories": {
+      "output": "../../bin/gui"
+    },
+    "files": [
+      "dist/**/*",
+      "src/renderer/**/*",
+      "build/icons/**/*",
+      "../../bin/mgzon*"
+    ],
+    "icon": "build/icons/icon_512x512.png",
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icons/icon_512x512.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icons/icon_256x256.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icons/icon_512x512.png"
+    },
+    "publish": null
+  },
+  "author": "MGZON Team <dev@mgzon.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mark-Lasfar/mgzon-cli.git",
+    "directory": "gui"
+  },
+  "bugs": {
+    "url": "https://github.com/Mark-Lasfar/mgzon-cli/issues"
+  },
+  "homepage": "https://mgzon.com/docs/cli",
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^20.5.0",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
+    "concurrently": "^8.2.0",
+    "electron": "^25.0.0",
+    "electron-builder": "^24.6.0",
+    "eslint": "^9.39.2",
+    "sharp": "^0.34.5",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "axios": "^0.27.0",
+    "chalk": "^4.1.2"
+  }
+}
