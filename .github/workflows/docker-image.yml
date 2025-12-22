@@ -37,9 +37,9 @@ jobs:
           
           # اختبار الـ banner والـ help
           docker run --rm mgzon-cli:latest --help | grep "MGZON CLI" || exit 1
-          
-          # اختبار الـ version (دلوقتي 2.0.0)
-          docker run --rm mgzon-cli:latest --version | grep "2.0.0" || exit 1
+
+          # اختبار الـ version (دلوقتي 2.0.1)
+          docker run --rm mgzon-cli:latest --version | grep "2.0.1" || exit 1
           
           # اختبار أمر بسيط زي whoami (مش هيحتاج auth)
           docker run --rm mgzon-cli:latest whoami
