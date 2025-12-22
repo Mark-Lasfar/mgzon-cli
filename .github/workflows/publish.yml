@@ -42,11 +42,20 @@ jobs:
       - name: Get package version
         id: get_version
         run: |
-          echo "PACKAGE_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+          # Extract version safely and write to GITHUB_ENV
+          PACKAGE_VERSION=$(node -p 'require("./package.json").version')
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+          # Also expose as step output if needed
+          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Generate Release Notes
         run: |
-          sed -n "/^## $$ ${{ env.PACKAGE_VERSION }} $$/,/^## /p" CHANGELOG.md | sed '$d' > release_notes.md || true
+          # Extract release notes for the exact version; tolerate missing CHANGELOG
+          if [ -f CHANGELOG.md ]; then
+            sed -n "/^##[[:space:]]*$${{ env.PACKAGE_VERSION }}[[:space:]]*$/,/^## /p" CHANGELOG.md | sed '$d' > release_notes.md || true
+          else
+            echo "No CHANGELOG.md found" > release_notes.md
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -57,7 +66,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- Setup auth for npm (writes .npmrc safely) ---
       - name: Setup auth for npmjs (public npm)
         uses: actions/setup-node@v4
         with:
