@@ -42,11 +42,11 @@ jobs:
       - name: Get package version
         id: get_version
         run: |
-          echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+          echo "PACKAGE_VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
 
       - name: Generate Release Notes
         run: |
-          sed -n "/^## $$ ${{ env.PACKAGE_VERSION }} $$/,/^## /p" CHANGELOG.md | sed '$d' > release_notes.md
+          sed -n "/^## $$ ${{ env.PACKAGE_VERSION }} $$/,/^## /p" CHANGELOG.md | sed '$d' > release_notes.md || true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -57,24 +57,63 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure npm auth (npmjs.org + GitHub Packages)
+      # --- Setup auth for npm (writes .npmrc safely) ---
+      - name: Setup auth for npmjs (public npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
+          node-auth-token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup auth for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          registry-url: 'https://npm.pkg.github.com'
+          always-auth: true
+          node-auth-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify npm auth (diagnose)
         run: |
-          # Write ~/.npmrc with entries for both registries (do not commit this file)
-          cat > ~/.npmrc <<'EOF'
-          //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-          //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-          always-auth=true
-          EOF
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "== npm whoami (npmjs.org) =="
+          npm whoami --registry=https://registry.npmjs.org/ || true
+          echo "== npm whoami (GitHub Packages) =="
+          npm whoami --registry=https://npm.pkg.github.com/ || true
+
+      - name: Check if version exists on npmjs
+        id: check_npmjs
+        run: |
+          if npm view @mgzon/cli@${{ env.PACKAGE_VERSION }} --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if version exists on GitHub Packages
+        id: check_githubpkg
+        run: |
+          if npm view @mgzon/cli@${{ env.PACKAGE_VERSION }} --registry=https://npm.pkg.github.com/ >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Publish to npm (registry.npmjs.org)
+        if: steps.check_npmjs.outputs.exists == 'false'
         run: npm publish --access public --provenance --registry https://registry.npmjs.org/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Skip publish to npm (already exists)
+        if: steps.check_npmjs.outputs.exists == 'true'
+        run: echo "Package @mgzon/cli@${{ env.PACKAGE_VERSION }} already exists on registry.npmjs.org — skipping publish."
+
       - name: Publish to GitHub Packages (npm.pkg.github.com)
+        if: steps.check_githubpkg.outputs.exists == 'false'
         run: npm publish --access public --registry https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip publish to GitHub Packages (already exists)
+        if: steps.check_githubpkg.outputs.exists == 'true'
+        run: echo "Package @mgzon/cli@${{ env.PACKAGE_VERSION }} already exists on npm.pkg.github.com — skipping publish."

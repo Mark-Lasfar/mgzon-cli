@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
     strategy:
       matrix:
         include:
@@ -49,34 +52,63 @@ jobs:
         run: cd gui && npm ci
 
       - name: Package GUI
-        run: npm run package:gui:${{ matrix.gui_cmd }}
+        run: cd gui && npm run package:gui:${{ matrix.gui_cmd }}
 
       # ---------------- Organize files ----------------
       - name: Organize binaries
         shell: bash
         run: |
+          echo "Runner OS: $RUNNER_OS"
           # CLI
           if [ "${{ runner.os }}" = "Linux" ]; then
-            mv bin/mgzon ${{ matrix.cli_name }}
+            mv -f bin/mgzon "${{ matrix.cli_name }}" || true
           elif [ "${{ runner.os }}" = "macOS" ]; then
-            mv bin/mgzon ${{ matrix.cli_name }}
+            mv -f bin/mgzon "${{ matrix.cli_name }}" || true
           else
-            mv bin\mgzon.exe ${{ matrix.cli_name }}
+            # Windows
+            mv -f "bin/mgzon.exe" "${{ matrix.cli_name }}" || true
           fi
 
-          # GUI
-          mv bin/gui/*.${{ matrix.gui_ext }} MGZON-GUI-${{ matrix.os }}.${{ matrix.gui_ext }} || true
+          # GUI - move first matching file (if present)
+          if [ -d bin/gui ]; then
+            for f in bin/gui/*."${{ matrix.gui_ext }}"; do
+              if [ -e "$f" ]; then
+                echo "Found GUI file: $f"
+                mv -f "$f" "MGZON-GUI-${{ matrix.os }}.${{ matrix.gui_ext }}" || true
+                break
+              fi
+            done
+          fi
+
+      - name: List generated files
+        run: ls -la || true
 
       # ---------------- Checksums ----------------
-      - name: Generate checksums
+      - name: Generate checksum (Linux / macOS)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            powershell Get-FileHash ${{ matrix.cli_name }} -Algorithm SHA256 |
-              ForEach-Object { "$($_.Hash.ToLower())  ${{ matrix.cli_name }}" } > ${{ matrix.cli_name }}.sha256
+          if [ -f "${{ matrix.cli_name }}" ]; then
+            shasum -a 256 "${{ matrix.cli_name }}" > "${{ matrix.cli_name }}.sha256"
           else
-            shasum -a 256 ${{ matrix.cli_name }} > ${{ matrix.cli_name }}.sha256
+            echo "CLI binary not found: ${{ matrix.cli_name }}"
+            exit 1
           fi
+
+      - name: Generate checksum (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path "${{ matrix.cli_name }}") {
+            $hash = Get-FileHash -Path "${{ matrix.cli_name }}" -Algorithm SHA256
+            ("{0}  {1}" -f $hash.Hash.ToLower(), "${{ matrix.cli_name }}") | Out-File -Encoding ascii "${{ matrix.cli_name }}.sha256"
+          } else {
+            Write-Error "CLI binary not found: ${{ matrix.cli_name }}"
+            exit 1
+          }
+
+      - name: List files before upload
+        run: ls -la || true
 
       # ---------------- Upload ----------------
       - name: Upload assets
@@ -85,4 +117,6 @@ jobs:
           files: |
             ${{ matrix.cli_name }}
             ${{ matrix.cli_name }}.sha256
-            MGZON.GUI.${{ matrix.gui_ext }}
+            MGZON-GUI-${{ matrix.os }}.${{ matrix.gui_ext }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
