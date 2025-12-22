@@ -1,6 +1,6 @@
 {
   "name": "mgzon-gui",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "MGZON GUI - Graphical User Interface for MGZON CLI",
   "main": "dist/main.js",
   "scripts": {

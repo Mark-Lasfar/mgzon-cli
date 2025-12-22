@@ -29,6 +29,7 @@ jobs:
       - name: Build executable with pkg
         run: npm run package
 
+      # Rename binaries per OS
       - name: Rename binaries
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
@@ -36,13 +37,46 @@ jobs:
           elif [ "${{ runner.os }}" = "macOS" ]; then
             mv bin/mgzon mgzon-macos
           elif [ "${{ runner.os }}" = "Windows" ]; then
-            mv bin/mgzon.exe mgzon-win.exe
-          fi
+            ren bin\mgzon.exe mgzon-win.exe
+        shell: bash
 
-      - name: Upload binaries to release
+      # Create ZIP archives
+      - name: Compress binaries
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            zip mgzon-linux.zip mgzon-linux
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            zip mgzon-macos.zip mgzon-macos
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            powershell Compress-Archive -Path mgzon-win.exe -DestinationPath mgzon-win.zip
+        shell: bash
+
+      # Generate SHA256 checksums
+      - name: Generate checksums
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sha256sum mgzon-linux.zip > mgzon-linux.zip.sha256
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            shasum -a 256 mgzon-macos.zip > mgzon-macos.zip.sha256
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            powershell Get-FileHash mgzon-win.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash) mgzon-win.zip" } > mgzon-win.zip.sha256
+        shell: bash
+
+      # Extract release notes from CHANGELOG.md
+      - name: Generate Release Notes
+        id: changelog
+        run: |
+          awk '/## \[Unreleased\]/,/^## / {if (!/## /) print}' CHANGELOG.md > release_notes.md
+
+      # Upload binaries and release notes to GitHub Release
+      - name: Upload assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            mgzon-linux
-            mgzon-macos
-            mgzon-win.exe
+            mgzon-linux.zip
+            mgzon-linux.zip.sha256
+            mgzon-macos.zip
+            mgzon-macos.zip.sha256
+            mgzon-win.zip
+            mgzon-win.zip.sha256
+            release_notes.md

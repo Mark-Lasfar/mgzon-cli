@@ -468,15 +468,14 @@ async function checkForUpdates() {
         const response = await axios_1.default.get('https://registry.npmjs.org/@mgzon/cli/latest', {
             timeout: 3000
         });
-        const packageJson = await fs_extra_1.default.readJson((0, path_1.join)(__dirname, '../../package.json'));
-        const currentVersion = packageJson.version;
+        const currentVersion = require('../../package.json').version;
         const latestVersion = response.data.version;
         if (currentVersion !== latestVersion) {
             console.log(chalk_1.default.yellow('\n' + '─'.repeat(50)));
             console.log(chalk_1.default.yellow('⚠️  Update available!'));
             console.log(chalk_1.default.cyan(`   Current: ${currentVersion}`));
             console.log(chalk_1.default.cyan(`   Latest: ${latestVersion}`));
-            console.log(chalk_1.default.cyan('   Run: npm install -g @mgzon/cli'));
+            console.log(chalk_1.default.cyan('   Run: npm install -g @mgzon/cli@latest'));
             console.log(chalk_1.default.yellow('─'.repeat(50) + '\n'));
         }
     }
