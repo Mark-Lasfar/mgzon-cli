@@ -23,3 +23,4 @@ yarn-error.log*
 
 # OS files
 Thumbs.db
+/gui/build/linux-unpacked/mgzon-gui
