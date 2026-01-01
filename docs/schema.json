@@ -1,0 +1,321 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://mgzon.com/cli/#software",
+      "name": "MGZON CLI",
+      "description": "Professional Command Line Interface for MGZON ecommerce platform with interactive terminal simulator and real-time documentation",
+      "url": "https://mgzon.com/cli",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "CommandLineTool",
+      "operatingSystem": ["Linux", "macOS", "Windows"],
+      "softwareVersion": "2.0.8",
+      "releaseNotes": "https://github.com/Mark-Lasfar/mgzon-cli/releases/tag/v2.0.8",
+      "downloadUrl": [
+        "https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v2.0.8/mgzon-linux",
+        "https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v2.0.8/mgzon-macos", 
+        "https://github.com/Mark-Lasfar/mgzon-cli/releases/download/v2.0.8/mgzon-win.exe"
+      ],
+      "installUrl": "https://www.npmjs.com/package/@mg-cli/cli",
+      "softwareHelp": "https://mgzon.com/cli/#docs",
+      "featureList": [
+        "Interactive Terminal Simulator",
+        "Real-time Documentation",
+        "Multi-platform Support",
+        "API Integration",
+        "Authentication Management",
+        "App Deployment",
+        "Webhook Testing",
+        "Database Operations"
+      ],
+      "screenshot": "https://mgzon.com/cli/screenshot.png",
+      "softwareRequirements": "Node.js >= 18.0.0",
+      "memoryRequirements": "512MB RAM",
+      "storageRequirements": "100MB disk space",
+      "permissions": "Read/Write file system, Network access",
+      "countriesSupported": "All",
+      "countriesNotSupported": "None",
+      "processorRequirements": "x64, arm64",
+      "availableOnDevice": ["Desktop", "Server"],
+      "fileSize": "25MB",
+      "datePublished": "2024-01-23",
+      "dateModified": "2024-01-23",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "MGZON"
+        }
+      },
+      "author": {
+        "@type": "Organization",
+        "@id": "https://mgzon.com/#organization",
+        "name": "MGZON Team",
+        "url": "https://mgzon.com",
+        "logo": "https://mgzon.com/logo.png",
+        "description": "Ecommerce platform for developers and sellers",
+        "email": "dev@mgzon.com",
+        "sameAs": [
+          "https://github.com/Mark-Lasfar",
+          "https://twitter.com/mgzon",
+          "https://linkedin.com/company/mgzon"
+        ]
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "MGZON"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "125",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "Ahmed Developer"
+          },
+          "datePublished": "2024-01-20",
+          "reviewBody": "Best CLI tool for ecommerce development! The interactive terminal is amazing.",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        },
+        {
+          "@type": "Review",
+          "author": {
+            "@type": "Person", 
+            "name": "Sarah Ecommerce"
+          },
+          "datePublished": "2024-01-18",
+          "reviewBody": "Saves hours of development time. Deployment is super smooth.",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://mgzon.com/cli/#website",
+      "url": "https://mgzon.com/cli",
+      "name": "MGZON CLI Documentation",
+      "description": "Interactive documentation and terminal simulator for MGZON CLI",
+      "publisher": {
+        "@id": "https://mgzon.com/#organization"
+      },
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "target": "https://mgzon.com/cli/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      ],
+      "inLanguage": "en"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://mgzon.com/cli/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://mgzon.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Developers",
+          "item": "https://mgzon.com/developers"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "CLI Tool",
+          "item": "https://mgzon.com/cli"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://mgzon.com/cli/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is MGZON CLI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "MGZON CLI is a professional command-line interface tool for the MGZON ecommerce platform. It helps developers create, deploy, and manage applications with interactive terminal simulation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which platforms are supported?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "MGZON CLI supports Linux (AppImage), macOS (.dmg), and Windows (.exe). It also works via npm for Node.js developers."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I install MGZON CLI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can install via npm: 'npm install -g @mg-cli/cli' or download standalone binaries from GitHub Releases."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is MGZON CLI free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, MGZON CLI is completely free and open source under MIT license."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I get started?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "1. Install CLI 2. Run 'mz login' 3. Create app with 'mz init my-app' 4. Deploy with 'mz deploy'"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://mgzon.com/cli/#howto-install",
+      "name": "How to Install MGZON CLI on Linux",
+      "description": "Step-by-step guide to install MGZON CLI on Linux systems",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "text": "Download the Linux binary from GitHub Releases",
+          "name": "Download",
+          "url": "https://mgzon.com/cli/#step1"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "Make the file executable: chmod +x mgzon-linux",
+          "name": "Make Executable",
+          "url": "https://mgzon.com/cli/#step2"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "Run the CLI: ./mgzon-linux --version",
+          "name": "Test Installation",
+          "url": "https://mgzon.com/cli/#step3"
+        },
+        {
+          "@type": "HowToStep",
+          "text": "(Optional) Move to PATH for global access",
+          "name": "Global Access",
+          "url": "https://mgzon.com/cli/#step4"
+        }
+      ],
+      "totalTime": "PT2M",
+      "tool": ["Terminal", "Browser"],
+      "supply": ["Internet connection"],
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://mgzon.com/#organization",
+      "name": "MGZON",
+      "url": "https://mgzon.com",
+      "logo": "https://mgzon.com/logo.png",
+      "description": "Ecommerce platform for developers and sellers",
+      "email": "contact@mgzon.com",
+      "telephone": "+1-555-CLI-TOOL",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Developer Street",
+        "addressLocality": "San Francisco",
+        "addressRegion": "CA",
+        "postalCode": "94107",
+        "addressCountry": "US"
+      },
+      "sameAs": [
+        "https://github.com/Mark-Lasfar",
+        "https://twitter.com/mgzon",
+        "https://linkedin.com/company/mgzon",
+        "https://www.youtube.com/@mgzon",
+        "https://discord.gg/mgzon"
+      ],
+      "foundingDate": "2023",
+      "founders": [
+        {
+          "@type": "Person",
+          "name": "Mark Lasfar"
+        }
+      ],
+      "numberOfEmployees": "10-50",
+      "slogan": "Ecommerce for Developers"
+    },
+    {
+      "@type": "VideoObject",
+      "@id": "https://mgzon.com/cli/#video",
+      "name": "MGZON CLI Demo: Create and Deploy an App in 5 Minutes",
+      "description": "Watch how to create and deploy an ecommerce app using MGZON CLI terminal simulator",
+      "thumbnailUrl": "https://mgzon.com/cli/video-thumbnail.jpg",
+      "uploadDate": "2024-01-23",
+      "duration": "PT5M30S",
+      "contentUrl": "https://www.youtube.com/watch?v=mgzon-cli-demo",
+      "embedUrl": "https://www.youtube.com/embed/mgzon-cli-demo",
+      "publisher": {
+        "@id": "https://mgzon.com/#organization"
+      },
+      "hasPart": [
+        {
+          "@type": "Clip",
+          "name": "Terminal Demo",
+          "startOffset": 60,
+          "endOffset": 180,
+          "url": "https://www.youtube.com/watch?v=mgzon-cli-demo&t=60s"
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "@id": "https://mgzon.com/cli/#article",
+      "headline": "Getting Started with MGZON CLI: Complete Guide",
+      "description": "Complete tutorial on using MGZON CLI for ecommerce development",
+      "author": {
+        "@type": "Person",
+        "name": "MGZON Team"
+      },
+      "publisher": {
+        "@id": "https://mgzon.com/#organization"
+      },
+      "datePublished": "2024-01-23",
+      "dateModified": "2024-01-23",
+      "mainEntityOfPage": "https://mgzon.com/cli",
+      "articleBody": "MGZON CLI is a powerful tool that simplifies ecommerce development...",
+      "wordCount": 1500,
+      "timeRequired": "PT10M",
+      "keywords": ["mgzon cli", "ecommerce development", "terminal", "deployment"],
+      "articleSection": ["Development", "Tools", "Ecommerce"],
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "xpath": ["/html/head/title", "/html/body/div[@id='content']/h1"]
+      }
+    }
+  ]
+}

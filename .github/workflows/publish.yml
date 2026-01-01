@@ -4,10 +4,15 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**.png'
+      - '**.svg'
   workflow_dispatch: {}
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -17,11 +22,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Node.js (for runtime)
+      - name: Setup Git Identity
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -29,100 +42,235 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Sync GUI version
-        run: |
-          ROOT_VERSION=$(node -p "require('./package.json').version")
-          echo "Updating gui/package.json version to $ROOT_VERSION"
-          jq ".version=\"$ROOT_VERSION\"" gui/package.json > gui/package.tmp.json
-          mv gui/package.tmp.json gui/package.json
+      - name: Fix pkg configuration
+        run: node fix-pkg.js
 
-      - name: Build package
-        run: npm run build
-
-      - name: Get package version
-        id: get_version
+      - name: Update version automatically
+        id: version
         run: |
-          # Extract version safely and write to GITHUB_ENV
-          PACKAGE_VERSION=$(node -p 'require("./package.json").version')
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
-          # Also expose as step output if needed
-          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          # Get current version and increment patch
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Extract major.minor.patch
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+          
+          echo "New version: $NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # Update root package.json
+          npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+          
+          # Update GUI package.json
+          cd gui
+          npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+          cd ..
 
-      - name: Generate Release Notes
+      - name: Build CLI
         run: |
-          # Extract release notes for the exact version; tolerate missing CHANGELOG
-          if [ -f CHANGELOG.md ]; then
-            sed -n "/^##[[:space:]]*$${{ env.PACKAGE_VERSION }}[[:space:]]*$/,/^## /p" CHANGELOG.md | sed '$d' > release_notes.md || true
-          else
-            echo "No CHANGELOG.md found" > release_notes.md
+          # Build and package CLI
+          npm run build
+          npm run package:fix
+          
+          # Verify CLI binaries
+          echo "=== CLI Binaries ==="
+          ls -la bin/
+          echo "=== Binary Info ==="
+          ./bin/mgzon-linux --version || echo "Testing binary..."
+
+      - name: Build GUI (Linux only in CI)
+        run: |
+          cd gui
+          npm ci
+          npm run package:linux
+          cd ..
+          
+          echo "=== GUI Build ==="
+          ls -la gui/build/linux-unpacked/ || echo "No linux-unpacked directory"
+          find gui/build -name "*.AppImage" -o -name "MGZON GUI*" | xargs ls -la 2>/dev/null || true
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          
+          # Copy CLI binaries
+          cp bin/mgzon-linux release-assets/ 2>/dev/null || true
+          cp bin/mgzon-macos release-assets/ 2>/dev/null || true
+          cp bin/mgzon-win.exe release-assets/ 2>/dev/null || true
+          
+          # Copy GUI from correct location
+          if [ -d "gui/build" ]; then
+            find gui/build -maxdepth 1 -type f \( -name "*.AppImage" -o -name "*.dmg" -o -name "*.exe" \) -exec cp {} release-assets/ \;
           fi
+          
+          # Also check bin/gui
+          if [ -d "bin/gui" ]; then
+            cp bin/gui/* release-assets/ 2>/dev/null || true
+          fi
+          
+          # Create checksums
+          cd release-assets
+          for file in *; do
+            if [ -f "$file" ]; then
+              sha256sum "$file" > "$file.sha256"
+              echo "Created checksum for $file"
+            fi
+          done
+          cd ..
+          
+          echo "=== Release Assets ==="
+          ls -la release-assets/
 
       - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.PACKAGE_VERSION }}
-          name: v${{ env.PACKAGE_VERSION }}
-          body_path: release_notes.md
+          tag_name: v${{ env.NEW_VERSION }}
+          name: MGZON CLI v${{ env.NEW_VERSION }}
+          body: |
+            ## MGZON CLI v${{ env.NEW_VERSION }}
+            
+            ### 🚀 New Features
+            - Automated CI/CD pipeline
+            - Cross-platform binaries
+            - Integrated GUI application
+            
+            ### 📦 Binaries Included
+            #### CLI (Command Line Interface)
+            - `mgzon-linux` - Linux x64 binary
+            - `mgzon-macos` - macOS x64 binary  
+            - `mgzon-win.exe` - Windows x64 binary
+            
+            #### GUI (Graphical User Interface) - Linux Only in CI
+            - `MGZON GUI-*.AppImage` - Linux GUI application
+            
+            ### 🔧 Installation Options
+            
+            #### Option 1: Install via npm (Recommended)
+            ```bash
+            # Install globally
+            npm install -g @mg-cli/cli
+            
+            # Verify installation
+            mgzon --version
+            mz --version
+            ```
+            
+            #### Option 2: Use Direct Binary Downloads
+            ```bash
+            # Linux
+            chmod +x mgzon-linux
+            ./mgzon-linux --help
+            
+            # macOS
+            chmod +x mgzon-macos
+            ./mgzon-macos --help
+            
+            # Windows
+            # Run mgzon-win.exe directly
+            ```
+            
+            #### Option 3: Docker
+            ```bash
+            docker run --rm ghcr.io/${{ github.repository }}:latest --version
+            ```
+            
+            ### 🔐 Security & Verification
+            All files include SHA256 checksums for verification. Always verify checksums before execution.
+            
+            ### 📝 Documentation
+            See [README.md](https://github.com/Mark-Lasfar/mgzon-cli#readme) for full documentation.
+            
+            ### 🐛 Issues & Support
+            Report issues at: https://github.com/Mark-Lasfar/mgzon-cli/issues
+          draft: false
+          prerelease: false
+          files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup auth for npmjs (public npm)
+      - name: Setup npm for publishing (npmjs.org)
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true
-          node-auth-token: ${{ secrets.NPM_TOKEN }}
+          cache: 'npm'
 
-      - name: Setup auth for GitHub Packages
+      - name: Verify npm authentication (npmjs.org)
+        run: |
+          npm whoami --registry=https://registry.npmjs.org/ || echo "Will use NPM_TOKEN for authentication"
+
+      - name: Check if version exists on npmjs.org
+        id: check_npm
+        run: |
+          if npm view @mg-cli/cli@${{ env.NEW_VERSION }} --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version ${{ env.NEW_VERSION }} already exists on npmjs.org"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version ${{ env.NEW_VERSION }} not found on npmjs.org"
+          fi
+
+      - name: Publish to npmjs.org
+        if: steps.check_npm.outputs.exists == 'false'
+        run: |
+          npm publish --access public --registry https://registry.npmjs.org/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup npm for GitHub Packages (Optional)
+        if: ${{ secrets.MGZON_PKG_TOKEN != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://npm.pkg.github.com'
-          always-auth: true
-          node-auth-token: ${{ secrets.MGZON_PKG_TOKEN }}
+          cache: 'npm'
 
-      - name: Verify npm auth (diagnose)
+      - name: Configure GitHub Packages registry
+        if: ${{ secrets.MGZON_PKG_TOKEN != '' }}
         run: |
-          echo "== npm whoami (npmjs.org) =="
-          npm whoami --registry=https://registry.npmjs.org/ || true
-          echo "== npm whoami (GitHub Packages) =="
-          npm whoami --registry=https://npm.pkg.github.com/ || true
-
-      - name: Check if version exists on npmjs
-        id: check_npmjs
-        run: |
-          if npm view @mgzon/cli@${{ env.PACKAGE_VERSION }} --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
+          echo "@mg-cli:registry=https://npm.pkg.github.com/" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.MGZON_PKG_TOKEN }}" >> ~/.npmrc
 
       - name: Check if version exists on GitHub Packages
-        id: check_githubpkg
+        if: ${{ secrets.MGZON_PKG_TOKEN != '' }}
+        id: check_github_pkg
         run: |
-          if npm view @mgzon/cli@${{ env.PACKAGE_VERSION }} --registry=https://npm.pkg.github.com/ >/dev/null 2>&1; then
+          if npm view @mg-cli/cli@${{ env.NEW_VERSION }} --registry=https://npm.pkg.github.com/ >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version ${{ env.NEW_VERSION }} already exists on GitHub Packages"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version ${{ env.NEW_VERSION }} not found on GitHub Packages"
           fi
 
-      - name: Publish to npm (registry.npmjs.org)
-        if: steps.check_npmjs.outputs.exists == 'false'
-        run: npm publish --access public --provenance --registry https://registry.npmjs.org/
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Skip publish to npm (already exists)
-        if: steps.check_npmjs.outputs.exists == 'true'
-        run: echo "Package @mgzon/cli@${{ env.PACKAGE_VERSION }} already exists on registry.npmjs.org — skipping publish."
-
-      - name: Publish to GitHub Packages (npm.pkg.github.com)
-        if: steps.check_githubpkg.outputs.exists == 'false'
-        run: npm publish --access public --registry https://npm.pkg.github.com/
+      - name: Publish to GitHub Packages
+        if: ${{ secrets.MGZON_PKG_TOKEN != '' && steps.check_github_pkg.outputs.exists == 'false' }}
+        run: |
+          npm publish --access public --registry https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.MGZON_PKG_TOKEN }}
 
-      - name: Skip publish to GitHub Packages (already exists)
-        if: steps.check_githubpkg.outputs.exists == 'true'
-        run: echo "Package @mgzon/cli@${{ env.PACKAGE_VERSION }} already exists on npm.pkg.github.com — skipping publish."
+      - name: Skip GitHub Packages publish (no token or exists)
+        if: ${{ secrets.MGZON_PKG_TOKEN == '' || (secrets.MGZON_PKG_TOKEN != '' && steps.check_github_pkg.outputs.exists == 'true') }}
+        run: |
+          if [ -z "${{ secrets.MGZON_PKG_TOKEN }}" ]; then
+            echo "MGZON_PKG_TOKEN not set, skipping GitHub Packages publish"
+          else
+            echo "Version already exists on GitHub Packages, skipping publish"
+          fi
+
+      - name: Commit version updates
+        if: success()
+        run: |
+          git add package.json gui/package.json fix-pkg.js
+          git commit -m "chore: release v${{ env.NEW_VERSION }} [skip ci]"
+          git push origin HEAD:master

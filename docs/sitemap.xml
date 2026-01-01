@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+    
+    <!-- Home Page - Highest Priority -->
+    <url>
+        <loc>https://mgzon.com/cli</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+        <xhtml:link rel="alternate" hreflang="en" href="https://mgzon.com/cli" />
+        <xhtml:link rel="alternate" hreflang="ar" href="https://mgzon.com/cli/ar" />
+        
+        <!-- Images for Home Page -->
+        <image:image>
+            <image:loc>https://mgzon.com/cli/screenshot-terminal.png</image:loc>
+            <image:title>MGZON CLI Terminal Screenshot</image:title>
+            <image:caption>Interactive terminal simulator for MGZON CLI</image:caption>
+        </image:image>
+        <image:image>
+            <image:loc>https://mgzon.com/cli/logo-512.png</image:loc>
+            <image:title>MGZON CLI Logo</image:title>
+        </image:image>
+        
+        <!-- Video Content -->
+        <video:video>
+            <video:thumbnail_loc>https://mgzon.com/cli/video-thumbnail.jpg</video:thumbnail_loc>
+            <video:title>MGZON CLI Demo Video</video:title>
+            <video:description>Watch how to use MGZON CLI to create and deploy apps</video:description>
+            <video:content_loc>https://mgzon.com/cli/videos/demo.mp4</video:content_loc>
+            <video:player_loc>https://www.youtube.com/v/mgzon-cli-demo</video:player_loc>
+            <video:duration>330</video:duration>
+            <video:publication_date>2024-01-23</video:publication_date>
+            <video:family_friendly>yes</video:family_friendly>
+            <video:requires_subscription>no</video:requires_subscription>
+        </video:video>
+    </url>
+    
+    <!-- Documentation Pages -->
+    <url>
+        <loc>https://mgzon.com/cli/#docs</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/cli/docs/installation</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/cli/docs/architecture</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/cli/docs/user-flow</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <!-- Terminal Simulator -->
+    <url>
+        <loc>https://mgzon.com/cli/#terminal</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+    
+    <!-- Download Pages -->
+    <url>
+        <loc>https://mgzon.com/cli/#download</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- Platform Specific Downloads -->
+    <url>
+        <loc>https://mgzon.com/cli/download/linux</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/cli/download/macos</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/cli/download/windows</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <!-- API Reference -->
+    <url>
+        <loc>https://mgzon.com/cli/api-reference</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    
+    <!-- Support Page -->
+    <url>
+        <loc>https://mgzon.com/cli/support</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    
+    <!-- Release Notes -->
+    <url>
+        <loc>https://mgzon.com/cli/releases</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    
+    <!-- FAQ Page -->
+    <url>
+        <loc>https://mgzon.com/cli/faq</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    
+    <!-- Tutorials -->
+    <url>
+        <loc>https://mgzon.com/cli/tutorials/getting-started</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/cli/tutorials/deployment</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    
+    <!-- External Resources -->
+    <url>
+        <loc>https://github.com/Mark-Lasfar/mgzon-cli</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.4</priority>
+    </url>
+    
+    <url>
+        <loc>https://www.npmjs.com/package/@mg-cli/cli</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.4</priority>
+    </url>
+    
+    <url>
+        <loc>https://mgzon.com/blog/cli-introduction</loc>
+        <lastmod>2024-01-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+</urlset>

@@ -1,0 +1,106 @@
+# MGZON CLI Documentation - Robots.txt
+User-agent: *
+Allow: /
+Allow: /cli/
+Allow: /cli/#*
+Allow: /docs/
+Allow: /api/
+Allow: /download/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /test/
+Disallow: /*.json$
+Disallow: /*.log$
+Disallow: /*.sql$
+Disallow: /*?session=*
+Disallow: /*?debug=*
+Disallow: /*?admin=*
+
+# Crawl delay for heavy bots
+Crawl-delay: 2
+
+# Sitemaps
+Sitemap: https://mgzon.com/cli/sitemap.xml
+Sitemap: https://mgzon.com/sitemap-index.xml
+
+# Special instructions for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+Disallow: /admin/
+Disallow: /*.json$
+
+User-agent: Googlebot-Image
+Allow: /public/images/
+Allow: /assets/
+Disallow: /private/images/
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+Disallow: /admin/
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 3
+Disallow: /admin/
+Clean-param: ref *.mgzon.com/cli/
+
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 5
+Disallow: /admin/
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Applebot
+Allow: /
+Crawl-delay: 1
+
+# Bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MegaIndex
+Disallow: /
+
+# Host
+Host: mgzon.com
+
+# Visit-time: when to crawl (UTC)
+Visit-time: 0000-0600
+
+# Request-rate: requests per minute
+Request-rate: 30/1m
+
+# Special paths
+# Documentation should be crawled frequently
+# Terminal simulator is dynamic content
+# Download pages change less often
+
+# Mobile sitemap (if you have mobile version)
+Sitemap: https://mgzon.com/cli/mobile-sitemap.xml
+
+# News sitemap (for news/blog content)
+Sitemap: https://mgzon.com/cli/news-sitemap.xml
+
+# Video sitemap
+Sitemap: https://mgzon.com/cli/video-sitemap.xml
+
+# Image sitemap
+Sitemap: https://mgzon.com/cli/image-sitemap.xml
+
+# Last updated
+# LastUpdate: 2024-01-23

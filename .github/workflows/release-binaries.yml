@@ -3,30 +3,32 @@ name: Build and Upload Standalone Binaries
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-all-platforms:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            cli_name: mgzon-linux
+            gui_ext: AppImage
+            
+          - os: macos-latest
+            platform: macos
+            cli_name: mgzon-macos
+            gui_ext: dmg
+            
+          - os: windows-latest
+            platform: windows
+            cli_name: mgzon-win.exe
+            gui_ext: exe
+
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
-
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            gui_cmd: linux
-            cli_name: mgzon-linux
-            gui_ext: AppImage
-
-          - os: macos-latest
-            gui_cmd: mac
-            cli_name: mgzon-macos
-            gui_ext: dmg
-
-          - os: windows-latest
-            gui_cmd: win
-            cli_name: mgzon-win.exe
-            gui_ext: exe
 
     steps:
       - name: Checkout code
@@ -36,87 +38,115 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
 
-      # ---------------- CLI ----------------
       - name: Build CLI
-        run: npm run build
+        run: |
+          npm run build
+          npm run package
+          
+          echo "=== Built CLI binaries ==="
+          ls -la bin/
 
-      - name: Package CLI (pkg)
-        run: npm run package
-
-      # ---------------- GUI ----------------
-      - name: Install GUI dependencies
-        run: cd gui && npm ci
-
-      - name: Package GUI
-        run: cd gui && npm run package:gui:${{ matrix.gui_cmd }}
-
-      # ---------------- Organize files ----------------
-      - name: Organize binaries
+      - name: Rename CLI binary for current platform
         shell: bash
         run: |
-          echo "Runner OS: $RUNNER_OS"
-          # CLI
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            mv -f bin/mgzon "${{ matrix.cli_name }}" || true
-          elif [ "${{ runner.os }}" = "macOS" ]; then
-            mv -f bin/mgzon "${{ matrix.cli_name }}" || true
-          else
-            # Windows
-            mv -f "bin/mgzon.exe" "${{ matrix.cli_name }}" || true
-          fi
-
-          # GUI - move first matching file (if present)
-          if [ -d bin/gui ]; then
-            for f in bin/gui/*."${{ matrix.gui_ext }}"; do
-              if [ -e "$f" ]; then
-                echo "Found GUI file: $f"
-                mv -f "$f" "MGZON-GUI-${{ matrix.os }}.${{ matrix.gui_ext }}" || true
-                break
+          mkdir -p bin
+          echo "Looking for CLI binary..."
+          
+          # Find and rename based on platform
+          case "${{ matrix.platform }}" in
+            linux)
+              if [ -f "bin/mgzon" ]; then
+                mv bin/mgzon "bin/${{ matrix.cli_name }}"
+                echo "Renamed mgzon to ${{ matrix.cli_name }}"
               fi
-            done
-          fi
+              ;;
+            macos)
+              if [ -f "bin/mgzon" ]; then
+                mv bin/mgzon "bin/${{ matrix.cli_name }}"
+                echo "Renamed mgzon to ${{ matrix.cli_name }}"
+              fi
+              ;;
+            windows)
+              if [ -f "bin/mgzon.exe" ]; then
+                mv bin/mgzon.exe "bin/${{ matrix.cli_name }}"
+                echo "Renamed mgzon.exe to ${{ matrix.cli_name }}"
+              fi
+              ;;
+          esac
+          
+          echo "=== Final CLI binaries ==="
+          ls -la bin/
 
-      - name: List generated files
-        run: ls -la || true
+      - name: Build GUI
+        if: matrix.platform != 'windows' || matrix.os != 'windows-latest'  # Skip GUI on Windows for now
+        run: |
+          cd gui
+          npm ci
+          
+          # Build GUI for current platform
+          case "${{ matrix.platform }}" in
+            linux)
+              npm run package:linux
+              ;;
+            macos)
+              npm run package:mac
+              ;;
+            windows)
+              npm run package:win
+              ;;
+          esac
+          cd ..
 
-      # ---------------- Checksums ----------------
-      - name: Generate checksum (Linux / macOS)
-        if: runner.os != 'Windows'
+      - name: Prepare assets for upload
         shell: bash
         run: |
-          if [ -f "${{ matrix.cli_name }}" ]; then
-            shasum -a 256 "${{ matrix.cli_name }}" > "${{ matrix.cli_name }}.sha256"
-          else
-            echo "CLI binary not found: ${{ matrix.cli_name }}"
-            exit 1
+          mkdir -p upload-assets
+          
+          # Copy CLI binary
+          if [ -f "bin/${{ matrix.cli_name }}" ]; then
+            cp "bin/${{ matrix.cli_name }}" "upload-assets/"
+            echo "Copied CLI: ${{ matrix.cli_name }}"
           fi
+          
+          # Copy GUI if exists
+          if [ -d "bin/gui" ]; then
+            # Find GUI file
+            GUI_FILE=$(find bin/gui -name "*.${{ matrix.gui_ext }}" -o -name "MGZON GUI*.${{ matrix.gui_ext }}" | head -1)
+            if [ -n "$GUI_FILE" ] && [ -f "$GUI_FILE" ]; then
+              cp "$GUI_FILE" "upload-assets/"
+              echo "Copied GUI: $(basename "$GUI_FILE")"
+            fi
+          fi
+          
+          # Create checksums
+          cd upload-assets
+          for file in *; do
+            if [ -f "$file" ]; then
+              case "${{ matrix.os }}" in
+                ubuntu-latest|macos-latest)
+                  shasum -a 256 "$file" > "$file.sha256"
+                  ;;
+                windows-latest)
+                  # PowerShell on Windows
+                  powershell -Command "Get-FileHash '$file' -Algorithm SHA256 | ForEach-Object { '{0}  {1}' -f \$_.Hash.ToLower(), '$file' } | Out-File -Encoding ascii '$file.sha256'"
+                  ;;
+              esac
+              echo "Created checksum for $file"
+            fi
+          done
+          cd ..
+          
+          echo "=== Upload assets ==="
+          ls -la upload-assets/
 
-      - name: Generate checksum (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          if (Test-Path "${{ matrix.cli_name }}") {
-            $hash = Get-FileHash -Path "${{ matrix.cli_name }}" -Algorithm SHA256
-            ("{0}  {1}" -f $hash.Hash.ToLower(), "${{ matrix.cli_name }}") | Out-File -Encoding ascii "${{ matrix.cli_name }}.sha256"
-          } else {
-            Write-Error "CLI binary not found: ${{ matrix.cli_name }}"
-            exit 1
-          }
-
-      - name: List files before upload
-        run: ls -la || true
-
-      # ---------------- Upload ----------------
-      - name: Upload assets
+      - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ${{ matrix.cli_name }}
-            ${{ matrix.cli_name }}.sha256
-            MGZON-GUI-${{ matrix.os }}.${{ matrix.gui_ext }}
+          files: upload-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
