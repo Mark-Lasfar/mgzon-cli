@@ -20,7 +20,7 @@ Use this section to tell people about which versions of your project are current
 
 ## Reporting a Vulnerability
 
-### How to Report
+### How to Report 
 
 We take security vulnerabilities seriously. If you discover a security issue in MGZON CLI, please report it to us as follows:
 
